@@ -1,19 +1,8 @@
-#include <algorithm>
 #include <cassert>
-#include <cmath>
 #include <cstdio>
-#include <cstdlib>
 #include <cstring>
-#include <ctime>
-#include <iostream>
 #include <limits>
-#include <map>
-#include <queue>
-#include <set>
-#include <sstream>
-#include <string>
 #include <unordered_map>
-#include <utility>
 #include <vector>
 
 using namespace std;
@@ -44,7 +33,6 @@ struct Pt {
 namespace std {
 
 template <>
-
 struct hash<Pt> {
   size_t operator()(const Pt &k) const {
     std::hash<int> hasher;
@@ -75,11 +63,11 @@ struct Grid {
   char &cell(int x, int y) {
     int i = y + MAXD;
     int j = x + MAXD;
-    if (!(i >= 0 && i < MAXD + 1 + MAXD)) {
+    if (i < 0 || i > 2 * MAXD) {
       printf("%d\n", i);
       assert(false);
     }
-    if (!(j >= 0 && j < MAXD + 1 + MAXD)) {
+    if (j < 0 || i > 2 * MAXD) {
       printf("%d\n", j);
       assert(false);
     }
@@ -91,13 +79,11 @@ struct Grid {
   void drawFromInput(char wire) {
     _cursor = Pt(0, 0);
 
-    char d;
-    int steps;
-    while (true) {
-      char d = getchar();
-      scanf("%d", &steps);
+    for (;;) {
+      char d;
+      int steps;
+      scanf("%c%d", &d, &steps);
       char c = getchar();
-      printf("%c%d\n", d, steps);
       Pt dir = direction(d);
       drawSegment(wire, dir, steps);
       if (c == '\n' || c == EOF) {
@@ -109,7 +95,8 @@ struct Grid {
   }
 
   void drawSegment(char wire, Pt dir, int steps) {
-    auto &total_steps_map = wire == POSITIVE ? _total_steps_positive : _total_steps_negative;
+    auto &total_steps_map =
+        wire == POSITIVE ? _total_steps_positive : _total_steps_negative;
 
     for (int k = 0; k < steps; k++) {
       auto total_steps = total_steps_map[_cursor];
@@ -126,20 +113,11 @@ struct Grid {
     }
   }
 
-  void print(int n) {
-    for (int y = n; y > -n; y--) {
-      for (int x = -n; x < n; x++) {
-        putchar(cell(x, y));
-      }
-      putchar('\n');
-    }
-  }
-
   char _grid[MAXD + 1 + MAXD][MAXD + 1 + MAXD];
   Pt _cursor;
-  std::vector<Pt> _crosses;
-  std::unordered_map<Pt, int> _total_steps_negative;
-  std::unordered_map<Pt, int> _total_steps_positive;
+  vector<Pt> _crosses;
+  unordered_map<Pt, int> _total_steps_negative;
+  unordered_map<Pt, int> _total_steps_positive;
 };
 
 Grid grid;
@@ -149,13 +127,14 @@ int main() {
   grid.drawFromInput(NEGATIVE);
 
   int dist = 0;
-  int min_total_steps = std::numeric_limits<int>::max();
+  int min_total_steps = numeric_limits<int>::max();
 
   for (auto cross : grid._crosses) {
     if (cross.x == 0 && cross.y == 0) {
       continue;
     }
-    int total_steps = grid._total_steps_negative[cross] + grid._total_steps_positive[cross];
+    int total_steps =
+        grid._total_steps_negative[cross] + grid._total_steps_positive[cross];
     if (total_steps < min_total_steps) {
       min_total_steps = total_steps;
       dist = abs(cross.x) + abs(cross.y);

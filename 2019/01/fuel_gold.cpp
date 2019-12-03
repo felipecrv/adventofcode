@@ -1,20 +1,4 @@
-#include <algorithm>
-#include <cassert>
-#include <cmath>
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
-#include <ctime>
-#include <iostream>
-#include <map>
-#include <queue>
-#include <set>
-#include <sstream>
-#include <string>
-#include <utility>
-#include <vector>
-
-using namespace std;
+#include <stdio.h>
 
 int fuel_for_mass(int mass) {
   int fuel = mass / 3 - 2;
@@ -36,7 +20,6 @@ int main() {
   long long fuel_sum = 0;
   int mass = 0;
   while (scanf("%d", &mass) == 1) {
-    printf("%d\n", mass);
     int fuel = fuel_for_mass_recursive(mass);
     fuel_sum += fuel;
   }

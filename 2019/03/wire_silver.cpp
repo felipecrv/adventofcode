@@ -1,18 +1,7 @@
-#include <algorithm>
 #include <cassert>
-#include <cmath>
 #include <cstdio>
-#include <cstdlib>
 #include <cstring>
-#include <ctime>
-#include <iostream>
 #include <limits>
-#include <map>
-#include <queue>
-#include <set>
-#include <sstream>
-#include <string>
-#include <utility>
 #include <vector>
 
 using namespace std;
@@ -57,11 +46,11 @@ struct Grid {
   char &cell(int x, int y) {
     int i = y + MAXD;
     int j = x + MAXD;
-    if (!(i >= 0 && i < MAXD + 1 + MAXD)) {
+    if (i < 0 || i > 2 * MAXD) {
       printf("%d\n", i);
       assert(false);
     }
-    if (!(j >= 0 && j < MAXD + 1 + MAXD)) {
+    if (j < 0 || i > 2 * MAXD) {
       printf("%d\n", j);
       assert(false);
     }
@@ -73,13 +62,11 @@ struct Grid {
   void drawFromInput(char wire) {
     _cursor = Pt(0, 0);
 
-    char d;
-    int steps;
-    while (true) {
-      char d = getchar();
-      scanf("%d", &steps);
+    for (;;) {
+      char d;
+      int steps;
+      scanf("%c%d", &d, &steps);
       char c = getchar();
-      printf("%c%d\n", d, steps);
       Pt dir = direction(d);
       drawSegment(wire, dir, steps);
       if (c == '\n' || c == EOF) {
@@ -109,11 +96,12 @@ struct Grid {
       }
       putchar('\n');
     }
+    putchar('\n');
   }
 
   char _grid[MAXD + 1 + MAXD][MAXD + 1 + MAXD];
   Pt _cursor;
-  std::vector<Pt> _crosses;
+  vector<Pt> _crosses;
 };
 
 Grid grid;
@@ -123,6 +111,7 @@ int main() {
   grid.print(10);
   grid.drawFromInput(NEGATIVE);
   grid.print(10);
+
   int min_dist = std::numeric_limits<int>::max();
   for (auto cross : grid._crosses) {
     if (cross.x == 0 && cross.y == 0) {

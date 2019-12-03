@@ -1,25 +1,6 @@
-#include <algorithm>
 #include <cassert>
-#include <cmath>
 #include <cstdio>
-#include <cstdlib>
 #include <cstring>
-#include <ctime>
-#include <iostream>
-#include <map>
-#include <queue>
-#include <set>
-#include <sstream>
-#include <string>
-#include <utility>
-#include <vector>
-
-using namespace std;
-
-const int MAX_MEM = 1000;
-
-int prog[MAX_MEM];
-int mem[MAX_MEM];
 
 int run(int *mem, int len, int noun, int verb) {
   mem[1] = noun;
@@ -49,6 +30,7 @@ int run(int *mem, int len, int noun, int verb) {
     }
     pc += 4;
     continue;
+
   halt:
     did_halt = true;
     break;
@@ -59,6 +41,11 @@ int run(int *mem, int len, int noun, int verb) {
 }
 
 int main() {
+  const int MAX_MEM = 1000;
+
+  int prog[MAX_MEM];
+  int mem[MAX_MEM];
+
   memset(prog, 0, sizeof(prog));
   memset(mem, 0, sizeof(mem));
 
@@ -78,15 +65,10 @@ int main() {
       int result = run(mem, len, noun, verb);
       if (result == 19690720) {
         printf("%d %d -> %d\n", noun, verb, result);
-        break;  
+        break;
       }
     }
   }
-
-  for (int i = 0; i < len; i++) {
-    printf("%d,", mem[i]);
-  }
-  putchar('\n');
 
   return 0;
 }

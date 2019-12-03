@@ -1,20 +1,6 @@
-#include <algorithm>
 #include <cassert>
-#include <cmath>
 #include <cstdio>
-#include <cstdlib>
 #include <cstring>
-#include <ctime>
-#include <iostream>
-#include <map>
-#include <queue>
-#include <set>
-#include <sstream>
-#include <string>
-#include <utility>
-#include <vector>
-
-using namespace std;
 
 const int MAX_MEM = 1000000;
 
@@ -60,16 +46,14 @@ int main() {
     }
     pc += 4;
     continue;
+
   halt:
     did_halt = true;
     break;
   }
 
   assert(did_halt);
-  for (int i = 0; i < len; i++) {
-    printf("%d,", prog[i]);
-  }
-  putchar('\n');
+  printf("%d\n", prog[0]);
 
   return 0;
 }

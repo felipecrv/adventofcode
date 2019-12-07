@@ -7,9 +7,6 @@
 
 using namespace std;
 
-#define MAXN 100000
-static int data[MAXN];
-
 #define ADD 1
 #define MUL 2
 #define IN 3
@@ -21,12 +18,7 @@ static int data[MAXN];
 #define HLT 99
 
 struct VM {
-  VM(const int *mem, int len) : _len(len) {
-    clearState();
-    for (int i = 0; i < len; i++) {
-      _mem.push_back(mem[i]);
-    }
-  }
+  VM(vector<int> program) : _mem(std::move(program)) { clearState(); }
 
   void run() {
     assert(!has_output);
@@ -40,6 +32,10 @@ struct VM {
 
   void decodeAndExecute() {
     clearRegisters();
+
+    int mode0 = -1;
+    int mode1 = -1;
+    int mode2 = -1;
 
     // decode
     int op = deref(pc);
@@ -59,16 +55,12 @@ struct VM {
         break;
       case IN:
         mode0 = (op % 1000) / 100;
-        mode1 = -1;
-        mode2 = -1;
 
         fetchDestArg(mode0, deref(pc + 1), &r2);
         break;
 
       case OUT:
         mode0 = (op % 1000) / 100;
-        mode1 = -1;
-        mode2 = -1;
 
         fetchArg(mode0, deref(pc + 1), &r0);
         break;
@@ -77,16 +69,12 @@ struct VM {
       case JMP_IF_FALSE:
         mode0 = (op % 1000) / 100;
         mode1 = (op % 10000) / 1000;
-        mode2 = -1;
 
         fetchArg(mode0, deref(pc + 1), &r0);
         fetchArg(mode1, deref(pc + 2), &r1);
         break;
 
       case HLT:
-        mode0 = -1;
-        mode1 = -1;
-        mode2 = -1;
         break;
     }
 
@@ -165,7 +153,7 @@ struct VM {
 
   int deref(int addr) {
     // printf("deref[%d]: ", addr);
-    assert(addr >= 0 && addr < _len);
+    assert(addr >= 0 && addr < _mem.size());
     int val = _mem[addr];
     // printf("%d\n", val);
     return val;
@@ -173,7 +161,7 @@ struct VM {
 
   int *derefDest(int addr) {
     // printf("deref[%d]*: ", addr);
-    assert(addr >= 0 && addr < _len);
+    assert(addr >= 0 && addr < _mem.size());
     int *val = &_mem[addr];
     // printf("%d\n", *val);
     return val;
@@ -203,9 +191,6 @@ struct VM {
   void clearState() {
     pc = 0;
     opcode = 0;
-    mode0 = -1;
-    mode1 = -1;
-    mode2 = -1;
 
     clearRegisters();
 
@@ -218,9 +203,6 @@ struct VM {
 
   int pc;
   int opcode;
-  int mode0;
-  int mode1;
-  int mode2;
 
   int r0;
   int r1;
@@ -234,12 +216,11 @@ struct VM {
   int _out;
 
   vector<int> _mem;
-  int _len;
 };
 
-int runAllAmplifiers(const int *prog, int len, vector<int> phases) {
+int runAllAmplifiers(vector<int> program, vector<int> phases) {
   vector<VM> vms;
-  vms.emplace_back(prog, len);
+  vms.emplace_back(std::move(program));
   vms.push_back(vms[0]);
   vms.push_back(vms[0]);
   vms.push_back(vms[0]);
@@ -265,9 +246,9 @@ int runAllAmplifiers(const int *prog, int len, vector<int> phases) {
   return out;
 }
 
-int runAllAmplifiersInLoop(const int *prog, int len, vector<int> phases) {
+int runAllAmplifiersInLoop(vector<int> program, vector<int> phases) {
   vector<VM> vms;
-  vms.emplace_back(prog, len);
+  vms.emplace_back(std::move(program));
   vms.push_back(vms[0]);
   vms.push_back(vms[0]);
   vms.push_back(vms[0]);
@@ -301,7 +282,7 @@ int runAllAmplifiersInLoop(const int *prog, int len, vector<int> phases) {
   return e_out;
 }
 
-int maximizeAmplifiersThrust(const int *prog, int len, bool in_loop,
+int maximizeAmplifiersThrust(vector<int> program, bool in_loop,
                              vector<int> *out_max_phases) {
   auto run_all_amplifiers = in_loop ? runAllAmplifiersInLoop : runAllAmplifiers;
 
@@ -315,7 +296,7 @@ int maximizeAmplifiersThrust(const int *prog, int len, bool in_loop,
 
   *out_max_phases = phases;
   do {
-    int thrust = run_all_amplifiers(data, len, phases);
+    int thrust = run_all_amplifiers(program, phases);
     if (thrust > max_thrust) {
       *out_max_phases = phases;
       max_thrust = thrust;
@@ -325,8 +306,10 @@ int maximizeAmplifiersThrust(const int *prog, int len, bool in_loop,
 }
 
 int main() {
-  int len = 0;
-  while (scanf("%d", &data[len++])) {
+  vector<int> data;
+  int code;
+  while (scanf("%d", &code)) {
+    data.push_back(code);
     char c = getchar();
     if (c == EOF || c == '\n') {
       break;
@@ -336,23 +319,23 @@ int main() {
   }
 
   // 07/in_silverX
-  // int thrust = runAllAmplifiers(data, len, {4, 3, 2, 1, 0});
+  // int thrust = runAllAmplifiers(data, {4, 3, 2, 1, 0});
   // 43210
-  // int thrust = runAllAmplifiers(data, len, {0, 1, 2, 3, 4});
+  // int thrust = runAllAmplifiers(data, {0, 1, 2, 3, 4});
   // 54321
-  // int thrust = runAllAmplifiers(data, len, {1, 0, 4, 3, 2});
+  // int thrust = runAllAmplifiers(data, {1, 0, 4, 3, 2});
   // 65210
 
   // 07/in_goldX
-  // int thrust = runAllAmplifiersInLoop(data, len, {9, 8, 7, 6, 5});
+  // int thrust = runAllAmplifiersInLoop(data, {9, 8, 7, 6, 5});
   // 139629729
-  // int thrust = runAllAmplifiersInLoop(data, len, {9, 7, 8, 5, 6});
+  // int thrust = runAllAmplifiersInLoop(data, {9, 7, 8, 5, 6});
   // 18216
   // printf("thrust == %d\n", thrust);
 
   vector<int> max_phases;
   int max_thrust =
-      maximizeAmplifiersThrust(data, len, /* in_loop */ true, &max_phases);
+      maximizeAmplifiersThrust(data, /* in_loop */ true, &max_phases);
   printf("max_thrust: %d\n", max_thrust);
   printf("config:     %d%d%d%d%d\n", max_phases[0], max_phases[1],
          max_phases[2], max_phases[3], max_phases[4]);

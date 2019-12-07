@@ -10,6 +10,16 @@ using namespace std;
 #define MAXN 100000
 static int data[MAXN];
 
+#define ADD 1
+#define MUL 2
+#define IN 3
+#define OUT 4
+#define JMP_IF_TRUE 5
+#define JMP_IF_FALSE 6
+#define LT 7
+#define EQ 8
+#define HLT 99
+
 struct VM {
   VM(const int *mem, int len) : _len(len) {
     clearState();
@@ -35,10 +45,10 @@ struct VM {
     int op = deref(pc);
     opcode = op % 100;
     switch (opcode) {
-      case 1:  // ADD
-      case 2:  // MUL
-      case 7:  // LT
-      case 8:  // EQ
+      case ADD:
+      case MUL:
+      case LT:
+      case EQ:
         mode0 = (op % 1000) / 100;
         mode1 = (op % 10000) / 1000;
         mode2 = op / 10000;
@@ -47,7 +57,7 @@ struct VM {
         fetchArg(mode1, deref(pc + 2), &r1);
         fetchDestArg(mode2, deref(pc + 3), &r2);
         break;
-      case 3:  // IN
+      case IN:
         mode0 = (op % 1000) / 100;
         mode1 = -1;
         mode2 = -1;
@@ -55,7 +65,7 @@ struct VM {
         fetchDestArg(mode0, deref(pc + 1), &r2);
         break;
 
-      case 4:  // OUT
+      case OUT:
         mode0 = (op % 1000) / 100;
         mode1 = -1;
         mode2 = -1;
@@ -63,8 +73,8 @@ struct VM {
         fetchArg(mode0, deref(pc + 1), &r0);
         break;
 
-      case 5:  // JMP_IF_TRUE
-      case 6:  // JMP_IF_FALSE
+      case JMP_IF_TRUE:
+      case JMP_IF_FALSE:
         mode0 = (op % 1000) / 100;
         mode1 = (op % 10000) / 1000;
         mode2 = -1;
@@ -73,7 +83,7 @@ struct VM {
         fetchArg(mode1, deref(pc + 2), &r1);
         break;
 
-      case 99:  // HLT
+      case HLT:
         mode0 = -1;
         mode1 = -1;
         mode2 = -1;
@@ -82,21 +92,20 @@ struct VM {
 
     // execute
     switch (opcode) {
-      case 1:  // ADD
+      case ADD:
         *r2 = r0 + r1;
         pc += 4;
         break;
-      case 2:  // MUL
+      case MUL:
         *r2 = r0 * r1;
         pc += 4;
         break;
-      case 3: {  // IN
+      case IN:
         *r2 = consumeInput();
         printf("IN %d\n", *r2);
         pc += 2;
         break;
-      }
-      case 4: {
+      case OUT: {
         _out = r0;
         printf("OUT %d\n", _out);
         pc += 2;
@@ -104,29 +113,29 @@ struct VM {
         has_output = true;
         break;
       }
-      case 5:  // JMP_IF_TRUE
+      case JMP_IF_TRUE:
         if (r0 != 0) {
           pc = r1;
         } else {
           pc += 3;
         }
         break;
-      case 6:  // JMP_IF_FALSE
+      case JMP_IF_FALSE:
         if (r0 == 0) {
           pc = r1;
         } else {
           pc += 3;
         }
         break;
-      case 7:  // LT
+      case LT:
         *r2 = r0 < r1 ? 1 : 0;
         pc += 4;
         break;
-      case 8:  // EQ
+      case EQ:
         *r2 = r0 == r1 ? 1 : 0;
         pc += 4;
         break;
-      case 99:  // HLT
+      case HLT:
         printf("HLT\n");
         pc += 1;
         did_halt = true;

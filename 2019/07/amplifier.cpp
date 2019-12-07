@@ -58,13 +58,11 @@ struct VM {
 
         fetchDestArg(mode0, deref(pc + 1), &r2);
         break;
-
       case OUT:
         mode0 = (op % 1000) / 100;
 
         fetchArg(mode0, deref(pc + 1), &r0);
         break;
-
       case JMP_IF_TRUE:
       case JMP_IF_FALSE:
         mode0 = (op % 1000) / 100;
@@ -73,7 +71,6 @@ struct VM {
         fetchArg(mode0, deref(pc + 1), &r0);
         fetchArg(mode1, deref(pc + 2), &r1);
         break;
-
       case HLT:
         break;
     }
@@ -152,18 +149,14 @@ struct VM {
   }
 
   int deref(int addr) {
-    // printf("deref[%d]: ", addr);
     assert(addr >= 0 && addr < _mem.size());
     int val = _mem[addr];
-    // printf("%d\n", val);
     return val;
   }
 
   int *derefDest(int addr) {
-    // printf("deref[%d]*: ", addr);
     assert(addr >= 0 && addr < _mem.size());
     int *val = &_mem[addr];
-    // printf("%d\n", *val);
     return val;
   }
 

@@ -229,27 +229,27 @@ struct VM {
 };
 
 int runAllAmplifiers(const int *prog, int len, vector<int> phases) {
-  VM a(prog, len);
-  VM b = a;
-  VM c = a;
-  VM d = a;
-  VM e = a;
-  VM *vms[] = {&a, &b, &c, &d, &e};
+  vector<VM> vms;
+  vms.emplace_back(prog, len);
+  vms.push_back(vms[0]);
+  vms.push_back(vms[0]);
+  vms.push_back(vms[0]);
+  vms.push_back(vms[0]);
 
   for (int i = 0; i < 5; i++) {
-    vms[i]->pushInput(phases[i]);
+    vms[i].pushInput(phases[i]);
   }
-  a.pushInput(0);
+  vms[0].pushInput(0);
 
   int out = 0;
   for (int i = 0; i < 5; i++) {
-    VM *vm = vms[i];
-    vm->run();
-    out = vm->consumeOutput();
-    vm->run();
-    assert(vm->did_halt);
+    VM &vm = vms[i];
+    vm.run();
+    out = vm.consumeOutput();
+    vm.run();
+    assert(vm.did_halt);
     if (i < 4) {
-      vms[i + 1]->pushInput(out);
+      vms[i + 1].pushInput(out);
     }
   }
 
@@ -257,34 +257,35 @@ int runAllAmplifiers(const int *prog, int len, vector<int> phases) {
 }
 
 int runAllAmplifiersInLoop(const int *prog, int len, vector<int> phases) {
-  VM a(prog, len);
-  VM b = a;
-  VM c = a;
-  VM d = a;
-  VM e = a;
-  VM *vms[] = {&a, &b, &c, &d, &e};
+  vector<VM> vms;
+  vms.emplace_back(prog, len);
+  vms.push_back(vms[0]);
+  vms.push_back(vms[0]);
+  vms.push_back(vms[0]);
+  vms.push_back(vms[0]);
+  auto *e = &vms[4];
 
   for (int i = 0; i < 5; i++) {
-    vms[i]->pushInput(phases[i]);
+    vms[i].pushInput(phases[i]);
   }
-  a.pushInput(0);
+  vms[0].pushInput(0);
 
   int e_out = 0;
   int out = 0;
   int i = 0;
   for (;;) {
-    VM *vm = vms[i];
-    vm->run();
-    if (vm->did_halt) {
+    VM &vm = vms[i];
+    vm.run();
+    if (vm.did_halt) {
       break;
     }
-    assert(vm->has_output);
-    out = vm->consumeOutput();
-    if (vm == &e) {
+    assert(vm.has_output);
+    out = vm.consumeOutput();
+    if (&vm == e) {
       e_out = out;
     }
     int next = (i + 1) % 5;
-    vms[next]->pushInput(out);
+    vms[next].pushInput(out);
     i = next;
   }
 
@@ -341,8 +342,8 @@ int main() {
   // printf("thrust == %d\n", thrust);
 
   vector<int> max_phases;
-  // int max_thrust = maximizeAmplifiersThrust(data, len, false, &max_phases);
-  int max_thrust = maximizeAmplifiersThrust(data, len, true, &max_phases);
+  int max_thrust =
+      maximizeAmplifiersThrust(data, len, /* in_loop */ true, &max_phases);
   printf("max_thrust: %d\n", max_thrust);
   printf("config:     %d%d%d%d%d\n", max_phases[0], max_phases[1],
          max_phases[2], max_phases[3], max_phases[4]);

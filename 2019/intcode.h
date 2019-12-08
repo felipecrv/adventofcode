@@ -50,7 +50,8 @@ struct VM {
 
   explicit VM(const std::string &program) : VM(parseProgram(program)) {}
 
-  void run() {
+  // Runs until it HALTs or an OUT instructions causes the CPU to pause.
+  void runUntilOutput() {
     assert(!hasOutput());
     assert(status = PAUSED);
     status = RUNNING;
@@ -266,7 +267,7 @@ std::vector<int> runProgramAndGetOutput(std::string program,
 
   std::vector<int> output;
   for (;;) {
-    vm.run();
+    vm.runUntilOutput();
     if (vm.status == HALTED) {
       break;
     }
@@ -286,7 +287,7 @@ int runProgramAndGetFirstOutput(std::string program,
   for (auto i : input) {
     vm.pushInput(i);
   }
-  vm.run();
+  vm.runUntilOutput();
   return vm.consumeOutput();
 }
 

@@ -23,7 +23,7 @@ TEST_CASE("Day 02: 1202 Program Alarm", "[intcode]") {
   SECTION("Basic example program") {
     VM vm("1,9,10,3,2,3,11,0,99,30,40,50");
     vm.run();
-    REQUIRE(vm.did_halt);
+    REQUIRE(vm.status == HALTED);
   }
 
   SECTION("Full program") {
@@ -38,7 +38,7 @@ TEST_CASE("Day 02: 1202 Program Alarm", "[intcode]") {
     *vm.derefDest(1) = 12;
     *vm.derefDest(2) = 2;
     vm.run();
-    REQUIRE(vm.did_halt);
+    REQUIRE(vm.status == HALTED);
     REQUIRE(vm.deref(0) == 6627023);
   }
 }
@@ -48,12 +48,12 @@ TEST_CASE("Day 5: Sunny with a Chance of Asteroids", "[intcode]") {
     {
       VM vm("1002,4,3,4,33");  // mem[4] = 3 * 33
       vm.run();
-      REQUIRE(vm.did_halt);
+      REQUIRE(vm.status == HALTED);
     }
     {
       VM vm("1101,100,-1,4,0");  // mem[4] = 100 + -1
       vm.run();
-      REQUIRE(vm.did_halt);
+      REQUIRE(vm.status == HALTED);
     }
   }
 
@@ -170,7 +170,7 @@ int runAllAmplifiers(std::vector<int> program, std::vector<int> phases) {
     vm.run();
     out = vm.consumeOutput();
     vm.run();
-    assert(vm.did_halt);
+    assert(vm.status == HALTED);
     if (i < 4) {
       vms[i + 1].pushInput(out);
     }
@@ -199,10 +199,10 @@ int runAllAmplifiersInLoop(std::vector<int> program, std::vector<int> phases) {
   for (;;) {
     VM &vm = vms[i];
     vm.run();
-    if (vm.did_halt) {
+    if (vm.status == HALTED) {
       break;
     }
-    assert(vm.has_output);
+    assert(vm.hasOutput());
     out = vm.consumeOutput();
     if (&vm == e) {
       e_out = out;

@@ -39,16 +39,24 @@ std::vector<int> parseProgram(const std::string &ss) {
   return program;
 }
 
+enum Status {
+  RUNNING = 0,
+  HALTED = 1,
+  PAUSED = 2  // because of I/O or on purpose
+};
+
 struct VM {
   VM(std::vector<int> program) : _mem(std::move(program)) { clearState(); }
 
   explicit VM(const std::string &program) : VM(parseProgram(program)) {}
 
   void run() {
-    assert(!has_output);
+    assert(!hasOutput());
+    assert(status = PAUSED);
+    status = RUNNING;
     for (;;) {
       decodeAndExecute();
-      if (did_halt || has_output) {
+      if (status == PAUSED || status == HALTED) {
         return;
       }
     }
@@ -110,16 +118,21 @@ struct VM {
         pc += 4;
         break;
       case IN:
-        *r2 = consumeInput();
-        printf("IN %d\n", *r2);
-        pc += 2;
+        if (hasInput()) {
+          *r2 = consumeInput();
+          printf("IN %d\n", *r2);
+          pc += 2;
+        } else {
+          printf("IN <pending>\n");
+          status = PAUSED;
+        }
         break;
       case OUT: {
-        _out = r0;
-        printf("OUT %d\n", _out);
+        printf("OUT %d\n", r0);
+        pushOutput(r0);
         pc += 2;
 
-        has_output = true;
+        status = PAUSED;
         break;
       }
       case JMP_IF_TRUE:
@@ -147,7 +160,7 @@ struct VM {
       case HLT:
         printf("HLT\n");
         pc += 1;
-        did_halt = true;
+        status = HALTED;
         break;
     }
   }
@@ -190,6 +203,8 @@ struct VM {
 
   void pushInput(int value) { _input.push(value); }
 
+  bool hasInput() const { return !_input.empty(); }
+
   int consumeInput() {
     assert(!_input.empty());
     int value = _input.front();
@@ -197,10 +212,15 @@ struct VM {
     return value;
   }
 
+  void pushOutput(int value) { _output.push(value); }
+
+  bool hasOutput() const { return !_output.empty(); }
+
   int consumeOutput() {
-    assert(has_output);
-    has_output = false;
-    return _out;
+    assert(hasOutput());
+    int value = _output.front();
+    _output.pop();
+    return value;
   }
 
   void clearRegisters() {
@@ -215,11 +235,10 @@ struct VM {
 
     clearRegisters();
 
-    did_halt = false;
-    has_output = false;
+    status = PAUSED;
 
     _input = std::queue<int>();
-    _out = 0;
+    _output = std::queue<int>();
   }
 
   int pc;
@@ -229,12 +248,11 @@ struct VM {
   int r1;
   int *r2;
 
-  bool did_halt;
-  bool has_output;
+  enum Status status;
 
  private:
   std::queue<int> _input;
-  int _out;
+  std::queue<int> _output;
 
   std::vector<int> _mem;
 };
@@ -249,7 +267,7 @@ std::vector<int> runProgramAndGetOutput(std::string program,
   std::vector<int> output;
   for (;;) {
     vm.run();
-    if (vm.did_halt) {
+    if (vm.status == HALTED) {
       break;
     }
     int out = vm.consumeOutput();

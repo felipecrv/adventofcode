@@ -22,7 +22,7 @@ TEST_CASE("Intcode utilities") {
 TEST_CASE("Day 02: 1202 Program Alarm", "[intcode]") {
   SECTION("Basic example program") {
     VM vm("1,9,10,3,2,3,11,0,99,30,40,50");
-    vm.runUntilOutput();
+    vm.run();
     REQUIRE(vm.status == HALTED);
   }
 
@@ -37,7 +37,7 @@ TEST_CASE("Day 02: 1202 Program Alarm", "[intcode]") {
         "155,1,2,155,159,1,6,159,0,99,2,0,14,0");
     *vm.derefDest(1) = 12;
     *vm.derefDest(2) = 2;
-    vm.runUntilOutput();
+    vm.run();
     REQUIRE(vm.status == HALTED);
     REQUIRE(vm.deref(0) == 6627023);
   }
@@ -47,12 +47,12 @@ TEST_CASE("Day 5: Sunny with a Chance of Asteroids", "[intcode]") {
   SECTION("Basic addressing mode examples") {
     {
       VM vm("1002,4,3,4,33");  // mem[4] = 3 * 33
-      vm.runUntilOutput();
+      vm.run();
       REQUIRE(vm.status == HALTED);
     }
     {
       VM vm("1101,100,-1,4,0");  // mem[4] = 100 + -1
-      vm.runUntilOutput();
+      vm.run();
       REQUIRE(vm.status == HALTED);
     }
   }
@@ -167,9 +167,8 @@ int runAllAmplifiers(std::vector<int> program, std::vector<int> phases) {
   int out = 0;
   for (int i = 0; i < 5; i++) {
     VM &vm = vms[i];
-    vm.runUntilOutput();
+    vm.run();
     out = vm.consumeOutput();
-    vm.runUntilOutput();
     assert(vm.status == HALTED);
     if (i < 4) {
       vms[i + 1].pushInput(out);

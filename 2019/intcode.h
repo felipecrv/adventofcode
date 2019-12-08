@@ -50,15 +50,42 @@ struct VM {
 
   explicit VM(const std::string &program) : VM(parseProgram(program)) {}
 
-  // Runs until it HALTs or an OUT instructions causes the CPU to pause.
+  // Runs eagerly until it halts or IN instruction is executed
+  // and the input queue is empty.
+  void run() {
+    assert(status == PAUSED);
+    status = RUNNING;
+    for (;;) {
+      decodeAndExecute();
+      if (opcode == HLT) {
+        assert(status == RUNNING);
+        status = HALTED;
+        break;
+      }
+      if (status == PAUSED || status == HALTED) {
+        break;
+      }
+    }
+  }
+
+  // Runs until it halts or an OUT instructions causes the CPU to pause.
   void runUntilOutput() {
-    assert(!hasOutput());
     assert(status = PAUSED);
     status = RUNNING;
     for (;;) {
       decodeAndExecute();
-      if (status == PAUSED || status == HALTED) {
-        return;
+      if (status == PAUSED) {
+        // an IN instruction can pause the CPU
+        break;
+      }
+      if (opcode == HLT) {
+        assert(status == RUNNING);
+        status = HALTED;
+        break;
+      }
+      if (opcode == OUT) {
+        status = PAUSED;
+        break;
       }
     }
   }
@@ -125,6 +152,8 @@ struct VM {
           pc += 2;
         } else {
           printf("IN <pending>\n");
+          // pause without incrementing the pc, so that when
+          // resuming, the IN instruction gets executed again.
           status = PAUSED;
         }
         break;
@@ -132,8 +161,6 @@ struct VM {
         printf("OUT %d\n", r0);
         pushOutput(r0);
         pc += 2;
-
-        status = PAUSED;
         break;
       }
       case JMP_IF_TRUE:
@@ -161,7 +188,8 @@ struct VM {
       case HLT:
         printf("HLT\n");
         pc += 1;
-        status = HALTED;
+        // the run loop should look at the opcode,
+        // change the status, and break the loop.
         break;
     }
   }

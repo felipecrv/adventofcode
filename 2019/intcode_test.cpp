@@ -11,11 +11,11 @@
 
 TEST_CASE("Intcode utilities") {
   SECTION("Parsing a program") {
-    REQUIRE(parseProgram("") == std::vector<int>({}));
-    REQUIRE(parseProgram("1") == std::vector<int>({1}));
-    REQUIRE(parseProgram("1,2") == std::vector<int>({1, 2}));
+    REQUIRE(parseProgram("") == std::vector<long long>({}));
+    REQUIRE(parseProgram("1") == std::vector<long long>({1}));
+    REQUIRE(parseProgram("1,2") == std::vector<long long>({1, 2}));
     REQUIRE(parseProgram("1,2,3,4,5,6") ==
-            std::vector<int>({1, 2, 3, 4, 5, 6}));
+            std::vector<long long>({1, 2, 3, 4, 5, 6}));
   }
 }
 
@@ -146,12 +146,13 @@ TEST_CASE("Day 5: Sunny with a Chance of Asteroids", "[intcode]") {
         "223,223,1108,226,677,224,102,2,223,223,1005,224,674,101,1,223,223,4,"
         "223,99,226";
     REQUIRE(runProgramAndGetOutput(diagnostic_program, 1) ==
-            std::vector<int>({0, 0, 0, 0, 0, 0, 0, 0, 0, 9775037}));
+            std::vector<long long>({0, 0, 0, 0, 0, 0, 0, 0, 0, 9775037}));
     REQUIRE(runProgramAndGetFirstOutput(diagnostic_program, 5) == 15586959);
   }
 }
 
-int runAllAmplifiers(std::vector<int> program, std::vector<int> phases) {
+long long runAllAmplifiers(std::vector<long long> program,
+                           std::vector<int> phases) {
   std::vector<VM> vms;
   vms.emplace_back(std::move(program));
   vms.push_back(vms[0]);
@@ -164,7 +165,7 @@ int runAllAmplifiers(std::vector<int> program, std::vector<int> phases) {
   }
   vms[0].pushInput(0);
 
-  int out = 0;
+  long long out = 0;
   for (int i = 0; i < 5; i++) {
     VM &vm = vms[i];
     vm.run();
@@ -178,7 +179,8 @@ int runAllAmplifiers(std::vector<int> program, std::vector<int> phases) {
   return out;
 }
 
-int runAllAmplifiersInLoop(std::vector<int> program, std::vector<int> phases) {
+long long runAllAmplifiersInLoop(std::vector<long long> program,
+                                 std::vector<int> phases) {
   std::vector<VM> vms;
   vms.emplace_back(std::move(program));
   vms.push_back(vms[0]);
@@ -192,8 +194,8 @@ int runAllAmplifiersInLoop(std::vector<int> program, std::vector<int> phases) {
   }
   vms[0].pushInput(0);
 
-  int e_out = 0;
-  int out = 0;
+  long long e_out = 0;
+  long long out = 0;
   int i = 0;
   for (;;) {
     VM &vm = vms[i];
@@ -214,7 +216,7 @@ int runAllAmplifiersInLoop(std::vector<int> program, std::vector<int> phases) {
   return e_out;
 }
 
-TEST_CASE("Day 7:  Amplification Circuit", "[intcode]") {
+TEST_CASE("Day 7: Amplification Circuit", "[intcode]") {
   SECTION("Basic examples (without feedback loop)") {
     auto prog = parseProgram("3,15,3,16,1002,16,10,16,1,16,15,15,4,15,99,0,0");
     REQUIRE(runAllAmplifiers(std::move(prog), {4, 3, 2, 1, 0}) == 43210);

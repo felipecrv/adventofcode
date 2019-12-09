@@ -20,13 +20,13 @@ TEST_CASE("Intcode utilities") {
 
 TEST_CASE("Day 02: 1202 Program Alarm", "[intcode]") {
   SECTION("Basic example program") {
-    VM vm("1,9,10,3,2,3,11,0,99,30,40,50");
-    vm.run();
-    REQUIRE(vm.status == HALTED);
+    CPU cpu("1,9,10,3,2,3,11,0,99,30,40,50");
+    cpu.run();
+    REQUIRE(cpu.status == HALTED);
   }
 
   SECTION("Full program") {
-    VM vm(
+    CPU cpu(
         "1,0,0,3,1,1,2,3,1,3,4,3,1,5,0,3,2,9,1,19,1,9,19,23,1,23,5,27,2,27,10,"
         "31,1,6,31,35,1,6,35,39,2,9,39,43,1,6,43,47,1,47,5,51,1,51,13,55,1,55,"
         "13,59,1,59,5,63,2,63,6,67,1,5,67,71,1,71,13,75,1,10,75,79,2,79,6,83,2,"
@@ -34,25 +34,25 @@ TEST_CASE("Day 02: 1202 Program Alarm", "[intcode]") {
         "111,1,111,6,115,2,9,115,119,1,119,6,123,1,123,9,127,2,127,13,131,1,"
         "131,9,135,1,10,135,139,2,139,10,143,1,143,5,147,2,147,6,151,1,151,5,"
         "155,1,2,155,159,1,6,159,0,99,2,0,14,0");
-    *vm.derefDest(1) = 12;
-    *vm.derefDest(2) = 2;
-    vm.run();
-    REQUIRE(vm.status == HALTED);
-    REQUIRE(vm.deref(0) == 6627023);
+    *cpu.derefDest(1) = 12;
+    *cpu.derefDest(2) = 2;
+    cpu.run();
+    REQUIRE(cpu.status == HALTED);
+    REQUIRE(cpu.deref(0) == 6627023);
   }
 }
 
 TEST_CASE("Day 5: Sunny with a Chance of Asteroids", "[intcode]") {
   SECTION("Basic addressing mode examples") {
     {
-      VM vm("1002,4,3,4,33");  // mem[4] = 3 * 33
-      vm.run();
-      REQUIRE(vm.status == HALTED);
+      CPU cpu("1002,4,3,4,33");  // mem[4] = 3 * 33
+      cpu.run();
+      REQUIRE(cpu.status == HALTED);
     }
     {
-      VM vm("1101,100,-1,4,0");  // mem[4] = 100 + -1
-      vm.run();
-      REQUIRE(vm.status == HALTED);
+      CPU cpu("1101,100,-1,4,0");  // mem[4] = 100 + -1
+      cpu.run();
+      REQUIRE(cpu.status == HALTED);
     }
   }
 
@@ -151,26 +151,26 @@ TEST_CASE("Day 5: Sunny with a Chance of Asteroids", "[intcode]") {
 }
 
 Word runAllAmplifiers(Program program, std::vector<int> phases) {
-  std::vector<VM> vms;
-  vms.emplace_back(std::move(program));
-  vms.push_back(vms[0]);
-  vms.push_back(vms[0]);
-  vms.push_back(vms[0]);
-  vms.push_back(vms[0]);
+  std::vector<CPU> cpus;
+  cpus.emplace_back(std::move(program));
+  cpus.push_back(cpus[0]);
+  cpus.push_back(cpus[0]);
+  cpus.push_back(cpus[0]);
+  cpus.push_back(cpus[0]);
 
   for (int i = 0; i < 5; i++) {
-    vms[i].pushInput(phases[i]);
+    cpus[i].pushInput(phases[i]);
   }
-  vms[0].pushInput(0);
+  cpus[0].pushInput(0);
 
   Word out = 0;
   for (int i = 0; i < 5; i++) {
-    VM &vm = vms[i];
-    vm.run();
-    out = vm.consumeOutput();
-    assert(vm.status == HALTED);
+    CPU &cpu = cpus[i];
+    cpu.run();
+    out = cpu.consumeOutput();
+    assert(cpu.status == HALTED);
     if (i < 4) {
-      vms[i + 1].pushInput(out);
+      cpus[i + 1].pushInput(out);
     }
   }
 
@@ -178,35 +178,35 @@ Word runAllAmplifiers(Program program, std::vector<int> phases) {
 }
 
 Word runAllAmplifiersInLoop(Program program, std::vector<int> phases) {
-  std::vector<VM> vms;
-  vms.emplace_back(std::move(program));
-  vms.push_back(vms[0]);
-  vms.push_back(vms[0]);
-  vms.push_back(vms[0]);
-  vms.push_back(vms[0]);
-  auto *e = &vms[4];
+  std::vector<CPU> cpus;
+  cpus.emplace_back(std::move(program));
+  cpus.push_back(cpus[0]);
+  cpus.push_back(cpus[0]);
+  cpus.push_back(cpus[0]);
+  cpus.push_back(cpus[0]);
+  auto *e = &cpus[4];
 
   for (int i = 0; i < 5; i++) {
-    vms[i].pushInput(phases[i]);
+    cpus[i].pushInput(phases[i]);
   }
-  vms[0].pushInput(0);
+  cpus[0].pushInput(0);
 
   Word e_out = 0;
   Word out = 0;
   int i = 0;
   for (;;) {
-    VM &vm = vms[i];
-    vm.runUntilOutput();
-    if (vm.status == HALTED) {
+    CPU &cpu = cpus[i];
+    cpu.runUntilOutput();
+    if (cpu.status == HALTED) {
       break;
     }
-    assert(vm.hasOutput());
-    out = vm.consumeOutput();
-    if (&vm == e) {
+    assert(cpu.hasOutput());
+    out = cpu.consumeOutput();
+    if (&cpu == e) {
       e_out = out;
     }
     int next = (i + 1) % 5;
-    vms[next].pushInput(out);
+    cpus[next].pushInput(out);
     i = next;
   }
 
@@ -271,11 +271,11 @@ TEST_CASE("Day 7: Amplification Circuit", "[intcode]") {
 TEST_CASE("Day 9: Sensor Boost", "[intcode]") {
   SECTION("Basic base pointer semantics") {
     auto prog = "109,2000,109,19,204,-34,99";
-    VM vm(prog);
-    vm.run();
-    REQUIRE(vm.status == HALTED);
-    REQUIRE(vm.bp == 2019);
-    REQUIRE(vm.consumeOutput() == 0);
+    CPU cpu(prog);
+    cpu.run();
+    REQUIRE(cpu.status == HALTED);
+    REQUIRE(cpu.bp == 2019);
+    REQUIRE(cpu.consumeOutput() == 0);
   }
 
   SECTION("Quine") {
@@ -286,18 +286,18 @@ TEST_CASE("Day 9: Sensor Boost", "[intcode]") {
 
   SECTION("64-bit support") {
     auto prog = parseProgram("1102,34915192,34915192,7,4,7,99,0");
-    VM vm(prog);
-    vm.run();
-    REQUIRE(vm.status == HALTED);
-    printf("%lld\n", vm.consumeOutput());
+    CPU cpu(prog);
+    cpu.run();
+    REQUIRE(cpu.status == HALTED);
+    printf("%lld\n", cpu.consumeOutput());
   }
 
   SECTION("Print long long number") {
     auto prog = parseProgram("104,1125899906842624,99");
-    VM vm(prog);
-    vm.run();
-    REQUIRE(vm.status == HALTED);
-    REQUIRE(vm.consumeOutput() == 1125899906842624);
+    CPU cpu(prog);
+    cpu.run();
+    REQUIRE(cpu.status == HALTED);
+    REQUIRE(cpu.consumeOutput() == 1125899906842624);
   }
 
   SECTION("Full program") {

@@ -16,10 +16,10 @@ int main() {
     }
   }
 
-  VM vm(std::move(data));
-  vm.pushInput(1); // tests
-  // vm.pushInput(2);  // production
-  vm.run();
+  CPU cpu(std::move(data));
+  cpu.pushInput(1); // tests
+  // cpu.pushInput(2);  // production
+  cpu.run();
 
   return 0;
 }

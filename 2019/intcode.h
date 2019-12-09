@@ -69,10 +69,10 @@ enum Status {
   PAUSED = 2  // because of I/O or on purpose
 };
 
-struct VM {
-  VM(Program program) : _mem(std::move(program)) { clearState(); }
+struct CPU {
+  CPU(Program program) : _mem(std::move(program)) { clearState(); }
 
-  explicit VM(const std::string &program) : VM(parseProgram(program)) {}
+  explicit CPU(const std::string &program) : CPU(parseProgram(program)) {}
 
   // Runs eagerly until it halts or IN instruction is executed
   // and the input queue is empty.
@@ -324,18 +324,18 @@ struct VM {
 };
 
 Program runProgramAndGetOutput(Program program, const Program &input) {
-  VM vm(std::move(program));
+  CPU cpu(std::move(program));
   for (auto i : input) {
-    vm.pushInput(i);
+    cpu.pushInput(i);
   }
 
   Program output;
   for (;;) {
-    vm.runUntilOutput();
-    if (vm.status == HALTED) {
+    cpu.runUntilOutput();
+    if (cpu.status == HALTED) {
       break;
     }
-    Word out = vm.consumeOutput();
+    Word out = cpu.consumeOutput();
     output.push_back(out);
   }
   return output;
@@ -346,12 +346,12 @@ Buffer runProgramAndGetOutput(Program program, Word input) {
 }
 
 Word runProgramAndGetFirstOutput(Program program, const Buffer &input) {
-  VM vm(std::move(program));
+  CPU cpu(std::move(program));
   for (auto i : input) {
-    vm.pushInput(i);
+    cpu.pushInput(i);
   }
-  vm.runUntilOutput();
-  return vm.consumeOutput();
+  cpu.runUntilOutput();
+  return cpu.consumeOutput();
 }
 
 Word runProgramAndGetFirstOutput(Program program, Word input) {

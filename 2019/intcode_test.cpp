@@ -145,7 +145,7 @@ TEST_CASE("Day 5: Sunny with a Chance of Asteroids", "[intcode]") {
         "223,223,1108,226,677,224,102,2,223,223,1005,224,674,101,1,223,223,4,"
         "223,99,226");
     REQUIRE(runProgramAndGetOutput(diagnostic_program, 1) ==
-            Program({0, 0, 0, 0, 0, 0, 0, 0, 0, 9775037}));
+            Buffer({0, 0, 0, 0, 0, 0, 0, 0, 0, 9775037}));
     REQUIRE(runProgramAndGetFirstOutput(diagnostic_program, 5) == 15586959);
   }
 }
@@ -355,11 +355,11 @@ TEST_CASE("Day 9: Sensor Boost", "[intcode]") {
 
     // IN=1 runs checks on the Intcode implementation and outputs problematic
     // opcodes instead of just 2745604242
-    REQUIRE(runProgramAndGetOutput(prog, Program({1LL})) ==
-            Program({2745604242}));
+    REQUIRE(runProgramAndGetOutput(prog, Buffer({1LL})) ==
+            Buffer({2745604242}));
 
     // IN=2 runs the program in sensor boost mode
-    REQUIRE(runProgramAndGetOutput(prog, Program({2LL})) == Program({51135}));
+    REQUIRE(runProgramAndGetOutput(prog, Buffer({2LL})) == Buffer({51135}));
   }
 }
 

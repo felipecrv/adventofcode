@@ -20,6 +20,7 @@
 
 using Word = long long;
 using Program = std::vector<Word>;
+using Buffer = std::vector<Word>;
 
 Program parseProgram(const std::string &ss) {
   Program program;
@@ -314,7 +315,7 @@ struct VM {
   std::queue<Word> _input;
   std::queue<Word> _output;
 
-  Program _mem;
+  Buffer _mem;
   std::unordered_map<Word, Word> _extra_mem;
 };
 
@@ -336,11 +337,11 @@ Program runProgramAndGetOutput(Program program, const Program &input) {
   return output;
 }
 
-Program runProgramAndGetOutput(Program program, Word input) {
-  return runProgramAndGetOutput(std::move(program), Program({input}));
+Buffer runProgramAndGetOutput(Program program, Word input) {
+  return runProgramAndGetOutput(std::move(program), Buffer({input}));
 }
 
-Word runProgramAndGetFirstOutput(Program program, const Program &input) {
+Word runProgramAndGetFirstOutput(Program program, const Buffer &input) {
   VM vm(std::move(program));
   for (auto i : input) {
     vm.pushInput(i);
@@ -350,5 +351,5 @@ Word runProgramAndGetFirstOutput(Program program, const Program &input) {
 }
 
 Word runProgramAndGetFirstOutput(Program program, Word input) {
-  return runProgramAndGetFirstOutput(std::move(program), Program({input}));
+  return runProgramAndGetFirstOutput(std::move(program), Buffer({input}));
 }

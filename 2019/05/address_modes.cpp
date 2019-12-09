@@ -17,23 +17,23 @@ struct VM {
   bool decodeAndExecute() {
     clearRegisters();
 
-    int op = deref(pc);
-    opcode = op % 100;
-    switch (opcode) {
+    int opcode = deref(pc);
+    op = opcode % 100;
+    switch (op) {
       case 1:  // ADD
       case 2:  // MUL
       case 7:  // LT
       case 8:  // EQ
-        mode0 = (op % 1000) / 100;
-        mode1 = (op % 10000) / 1000;
-        mode2 = op / 10000;
+        mode0 = (opcode % 1000) / 100;
+        mode1 = (opcode % 10000) / 1000;
+        mode2 = opcode / 10000;
 
         fetchArg(mode0, deref(pc + 1), &r0);
         fetchArg(mode1, deref(pc + 2), &r1);
         fetchDestArg(mode2, deref(pc + 3), &r2);
         break;
       case 3:  // IN
-        mode0 = (op % 1000) / 100;
+        mode0 = (opcode % 1000) / 100;
         mode1 = -1;
         mode2 = -1;
 
@@ -41,7 +41,7 @@ struct VM {
         break;
 
       case 4:  // OUT
-        mode0 = (op % 1000) / 100;
+        mode0 = (opcode % 1000) / 100;
         mode1 = -1;
         mode2 = -1;
 
@@ -50,8 +50,8 @@ struct VM {
 
       case 5:  // JMP_IF_TRUE
       case 6:  // JMP_IF_FALSE
-        mode0 = (op % 1000) / 100;
-        mode1 = (op % 10000) / 1000;
+        mode0 = (opcode % 1000) / 100;
+        mode1 = (opcode % 10000) / 1000;
         mode2 = -1;
 
         fetchArg(mode0, deref(pc + 1), &r0);
@@ -67,7 +67,7 @@ struct VM {
 
     // execute
     bool ret = true;
-    switch (opcode) {
+    switch (op) {
       case 1:  // ADD
         printf("ADD\n");
         *r2 = r0 + r1;
@@ -158,7 +158,7 @@ struct VM {
   }
 
   int pc = 0;
-  int opcode;
+  int op;
   int mode0 = -1;
   int mode1 = -1;
   int mode2 = -1;

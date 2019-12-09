@@ -4,8 +4,8 @@
 #include "intcode.h"
 
 int main() {
-  std::vector<long long> data;
-  long long code;
+  std::vector<Word> data;
+  Word code;
   while (scanf("%lld", &code)) {
     data.push_back(code);
     char c = getchar();

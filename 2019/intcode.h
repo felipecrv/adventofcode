@@ -18,12 +18,14 @@
 #define UBP 9  // update base pointer
 #define HLT 99
 
-std::vector<long long> parseProgram(const std::string &ss) {
-  std::vector<long long> program;
+using Word = long long;
+
+std::vector<Word> parseProgram(const std::string &ss) {
+  std::vector<Word> program;
 
   const char *s = ss.c_str();
   bool done = false;
-  for (long long code; !done && sscanf(s, "%lld", &code) == 1;) {
+  for (Word code; !done && sscanf(s, "%lld", &code) == 1;) {
     program.push_back(code);
     if (*s == '-' || isspace(*s)) {
       s++;
@@ -48,7 +50,7 @@ enum Status {
 };
 
 struct VM {
-  VM(std::vector<long long> program) : _mem(std::move(program)) { clearState(); }
+  VM(std::vector<Word> program) : _mem(std::move(program)) { clearState(); }
 
   explicit VM(const std::string &program) : VM(parseProgram(program)) {}
 
@@ -100,7 +102,7 @@ struct VM {
     int mode2 = -1;
 
     // decode
-    long long opcode = deref(pc);
+    Word opcode = deref(pc);
     op = opcode % 100;
     switch (op) {
       case ADD:
@@ -205,7 +207,7 @@ struct VM {
     }
   }
 
-  void fetchArg(int mode, long long mem_cell_val, long long *out_reg) {
+  void fetchArg(int mode, Word mem_cell_val, Word *out_reg) {
     if (mode == 0) {  // pos
       *out_reg = deref(mem_cell_val);
     } else if (mode == 1) {  // immediate
@@ -217,7 +219,7 @@ struct VM {
     }
   }
 
-  void fetchDestArg(int mode, long long mem_cell_val, long long **out_reg) {
+  void fetchDestArg(int mode, Word mem_cell_val, Word **out_reg) {
     if (mode == 0) {
       *out_reg = derefDest(mem_cell_val);
     } else if (mode == 1) {
@@ -229,10 +231,10 @@ struct VM {
     }
   }
 
-  long long deref(long long addr) {
+  Word deref(Word addr) {
     // printf("deref[%lld]: ", addr);
     assert(addr >= 0);
-    long long val = 0;
+    Word val = 0;
     if (addr >= _mem.size()) {
       val = _extra_mem[addr];
     } else {
@@ -242,10 +244,10 @@ struct VM {
     return val;
   }
 
-  long long *derefDest(long long addr) {
+  Word *derefDest(Word addr) {
     // printf("deref[%lld]*: ", addr);
     assert(addr >= 0);
-    long long *val = nullptr;
+    Word *val = nullptr;
     if (addr >= _mem.size()) {
       val = &_extra_mem[addr];
     } else {
@@ -255,24 +257,24 @@ struct VM {
     return val;
   }
 
-  void pushInput(long long value) { _input.push(value); }
+  void pushInput(Word value) { _input.push(value); }
 
   bool hasInput() const { return !_input.empty(); }
 
-  long long consumeInput() {
+  Word consumeInput() {
     assert(!_input.empty());
-    long long value = _input.front();
+    Word value = _input.front();
     _input.pop();
     return value;
   }
 
-  void pushOutput(long long value) { _output.push(value); }
+  void pushOutput(Word value) { _output.push(value); }
 
   bool hasOutput() const { return !_output.empty(); }
 
-  long long consumeOutput() {
+  Word consumeOutput() {
     assert(hasOutput());
-    long long value = _output.front();
+    Word value = _output.front();
     _output.pop();
     return value;
   }
@@ -292,54 +294,54 @@ struct VM {
 
     status = PAUSED;
 
-    _input = std::queue<long long>();
-    _output = std::queue<long long>();
+    _input = std::queue<Word>();
+    _output = std::queue<Word>();
   }
 
   int pc;
-  long long op;
+  Word op;
 
-  long long bp;  // base pointer
+  Word bp; // base pointer
 
-  long long r0;
-  long long r1;
-  long long *r2;
+  Word r0;
+  Word r1;
+  Word *r2;
 
   enum Status status;
 
  private:
-  std::queue<long long> _input;
-  std::queue<long long> _output;
+   std::queue<Word> _input;
+   std::queue<Word> _output;
 
-  std::vector<long long> _mem;
-  std::unordered_map<long long, long long> _extra_mem;
+   std::vector<Word> _mem;
+   std::unordered_map<Word, Word> _extra_mem;
 };
 
-std::vector<long long> runProgramAndGetOutput(std::string program,
-                                        const std::vector<long long> &input) {
+std::vector<Word> runProgramAndGetOutput(std::string program,
+                                         const std::vector<Word> &input) {
   VM vm(std::move(program));
   for (auto i : input) {
     vm.pushInput(i);
   }
 
-  std::vector<long long> output;
+  std::vector<Word> output;
   for (;;) {
     vm.runUntilOutput();
     if (vm.status == HALTED) {
       break;
     }
-    long long out = vm.consumeOutput();
+    Word out = vm.consumeOutput();
     output.push_back(out);
   }
   return output;
 }
 
-std::vector<long long> runProgramAndGetOutput(std::string program, long long input) {
-  return runProgramAndGetOutput(std::move(program), std::vector<long long>({input}));
+std::vector<Word> runProgramAndGetOutput(std::string program, Word input) {
+  return runProgramAndGetOutput(std::move(program), std::vector<Word>({input}));
 }
 
-long long runProgramAndGetFirstOutput(std::string program,
-                                const std::vector<long long> &input) {
+Word runProgramAndGetFirstOutput(std::string program,
+                                 const std::vector<Word> &input) {
   VM vm(std::move(program));
   for (auto i : input) {
     vm.pushInput(i);
@@ -348,7 +350,7 @@ long long runProgramAndGetFirstOutput(std::string program,
   return vm.consumeOutput();
 }
 
-long long runProgramAndGetFirstOutput(std::string program, long long input) {
+Word runProgramAndGetFirstOutput(std::string program, Word input) {
   return runProgramAndGetFirstOutput(std::move(program),
-                                     std::vector<long long>({input}));
+                                     std::vector<Word>({input}));
 }

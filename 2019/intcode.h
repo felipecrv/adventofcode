@@ -19,9 +19,10 @@
 #define HLT 99
 
 using Word = long long;
+using Program = std::vector<Word>;
 
-std::vector<Word> parseProgram(const std::string &ss) {
-  std::vector<Word> program;
+Program parseProgram(const std::string &ss) {
+  Program program;
 
   const char *s = ss.c_str();
   bool done = false;
@@ -50,7 +51,7 @@ enum Status {
 };
 
 struct VM {
-  VM(std::vector<Word> program) : _mem(std::move(program)) { clearState(); }
+  VM(Program program) : _mem(std::move(program)) { clearState(); }
 
   explicit VM(const std::string &program) : VM(parseProgram(program)) {}
 
@@ -313,18 +314,17 @@ struct VM {
   std::queue<Word> _input;
   std::queue<Word> _output;
 
-  std::vector<Word> _mem;
+  Program _mem;
   std::unordered_map<Word, Word> _extra_mem;
 };
 
-std::vector<Word> runProgramAndGetOutput(std::string program,
-                                         const std::vector<Word> &input) {
+Program runProgramAndGetOutput(std::string program, const Program &input) {
   VM vm(std::move(program));
   for (auto i : input) {
     vm.pushInput(i);
   }
 
-  std::vector<Word> output;
+  Program output;
   for (;;) {
     vm.runUntilOutput();
     if (vm.status == HALTED) {
@@ -336,12 +336,11 @@ std::vector<Word> runProgramAndGetOutput(std::string program,
   return output;
 }
 
-std::vector<Word> runProgramAndGetOutput(std::string program, Word input) {
-  return runProgramAndGetOutput(std::move(program), std::vector<Word>({input}));
+Program runProgramAndGetOutput(std::string program, Word input) {
+  return runProgramAndGetOutput(std::move(program), Program({input}));
 }
 
-Word runProgramAndGetFirstOutput(std::string program,
-                                 const std::vector<Word> &input) {
+Word runProgramAndGetFirstOutput(std::string program, const Program &input) {
   VM vm(std::move(program));
   for (auto i : input) {
     vm.pushInput(i);
@@ -351,6 +350,5 @@ Word runProgramAndGetFirstOutput(std::string program,
 }
 
 Word runProgramAndGetFirstOutput(std::string program, Word input) {
-  return runProgramAndGetFirstOutput(std::move(program),
-                                     std::vector<Word>({input}));
+  return runProgramAndGetFirstOutput(std::move(program), Program({input}));
 }

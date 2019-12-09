@@ -11,11 +11,10 @@
 
 TEST_CASE("Intcode utilities") {
   SECTION("Parsing a program") {
-    REQUIRE(parseProgram("") == std::vector<Word>({}));
-    REQUIRE(parseProgram("1") == std::vector<Word>({1}));
-    REQUIRE(parseProgram("1,2") == std::vector<Word>({1, 2}));
-    REQUIRE(parseProgram("1,2,3,4,5,6") ==
-            std::vector<Word>({1, 2, 3, 4, 5, 6}));
+    REQUIRE(parseProgram("") == Program({}));
+    REQUIRE(parseProgram("1") == Program({1}));
+    REQUIRE(parseProgram("1,2") == Program({1, 2}));
+    REQUIRE(parseProgram("1,2,3,4,5,6") == Program({1, 2, 3, 4, 5, 6}));
   }
 }
 
@@ -146,12 +145,12 @@ TEST_CASE("Day 5: Sunny with a Chance of Asteroids", "[intcode]") {
         "223,223,1108,226,677,224,102,2,223,223,1005,224,674,101,1,223,223,4,"
         "223,99,226";
     REQUIRE(runProgramAndGetOutput(diagnostic_program, 1) ==
-            std::vector<Word>({0, 0, 0, 0, 0, 0, 0, 0, 0, 9775037}));
+            Program({0, 0, 0, 0, 0, 0, 0, 0, 0, 9775037}));
     REQUIRE(runProgramAndGetFirstOutput(diagnostic_program, 5) == 15586959);
   }
 }
 
-Word runAllAmplifiers(std::vector<Word> program, std::vector<int> phases) {
+Word runAllAmplifiers(Program program, std::vector<int> phases) {
   std::vector<VM> vms;
   vms.emplace_back(std::move(program));
   vms.push_back(vms[0]);
@@ -178,8 +177,7 @@ Word runAllAmplifiers(std::vector<Word> program, std::vector<int> phases) {
   return out;
 }
 
-Word runAllAmplifiersInLoop(std::vector<Word> program,
-                            std::vector<int> phases) {
+Word runAllAmplifiersInLoop(Program program, std::vector<int> phases) {
   std::vector<VM> vms;
   vms.emplace_back(std::move(program));
   vms.push_back(vms[0]);
@@ -356,12 +354,11 @@ TEST_CASE("Day 9: Sensor Boost", "[intcode]") {
 
     // IN=1 runs checks on the Intcode implementation and outputs problematic
     // opcodes instead of just 2745604242
-    REQUIRE(runProgramAndGetOutput(prog, std::vector<Word>({1LL})) ==
-            std::vector<Word>({2745604242}));
+    REQUIRE(runProgramAndGetOutput(prog, Program({1LL})) ==
+            Program({2745604242}));
 
     // IN=2 runs the program in sensor boost mode
-    REQUIRE(runProgramAndGetOutput(prog, std::vector<Word>({2LL})) ==
-            std::vector<Word>({51135}));
+    REQUIRE(runProgramAndGetOutput(prog, Program({2LL})) == Program({51135}));
   }
 }
 

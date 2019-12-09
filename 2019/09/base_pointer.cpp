@@ -4,7 +4,7 @@
 #include "intcode.h"
 
 int main() {
-  std::vector<Word> data;
+  Program data;
   Word code;
   while (scanf("%lld", &code)) {
     data.push_back(code);

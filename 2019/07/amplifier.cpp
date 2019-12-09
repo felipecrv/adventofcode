@@ -5,8 +5,6 @@
 #include <queue>
 #include <vector>
 
-using namespace std;
-
 #define ADD 1
 #define MUL 2
 #define IN 3
@@ -17,8 +15,10 @@ using namespace std;
 #define EQ 8
 #define HLT 99
 
+using Program = std::vector<int>;
+
 struct VM {
-  VM(vector<int> program) : _mem(std::move(program)) { clearState(); }
+  VM(Program program) : _mem(std::move(program)) { clearState(); }
 
   void run() {
     assert(!has_output);
@@ -190,7 +190,7 @@ struct VM {
     did_halt = false;
     has_output = false;
 
-    _input = queue<int>();
+    _input = std::queue<int>();
     _out = 0;
   }
 
@@ -205,14 +205,14 @@ struct VM {
   bool has_output;
 
  private:
-  queue<int> _input;
+  std::queue<int> _input;
   int _out;
 
-  vector<int> _mem;
+  Program _mem;
 };
 
-int runAllAmplifiers(vector<int> program, vector<int> phases) {
-  vector<VM> vms;
+int runAllAmplifiers(Program program, std::vector<int> phases) {
+  std::vector<VM> vms;
   vms.emplace_back(std::move(program));
   vms.push_back(vms[0]);
   vms.push_back(vms[0]);
@@ -239,8 +239,8 @@ int runAllAmplifiers(vector<int> program, vector<int> phases) {
   return out;
 }
 
-int runAllAmplifiersInLoop(vector<int> program, vector<int> phases) {
-  vector<VM> vms;
+int runAllAmplifiersInLoop(Program program, std::vector<int> phases) {
+  std::vector<VM> vms;
   vms.emplace_back(std::move(program));
   vms.push_back(vms[0]);
   vms.push_back(vms[0]);
@@ -275,12 +275,12 @@ int runAllAmplifiersInLoop(vector<int> program, vector<int> phases) {
   return e_out;
 }
 
-int maximizeAmplifiersThrust(vector<int> program, bool in_loop,
-                             vector<int> *out_max_phases) {
+int maximizeAmplifiersThrust(Program program, bool in_loop,
+                             std::vector<int> *out_max_phases) {
   auto run_all_amplifiers = in_loop ? runAllAmplifiersInLoop : runAllAmplifiers;
 
   int max_thrust = 0;
-  vector<int> phases;
+  std::vector<int> phases;
   if (in_loop) {
     phases = {5, 6, 7, 8, 9};
   } else {
@@ -299,7 +299,7 @@ int maximizeAmplifiersThrust(vector<int> program, bool in_loop,
 }
 
 int main() {
-  vector<int> data;
+  Program data;
   int code;
   while (scanf("%d", &code)) {
     data.push_back(code);
@@ -326,7 +326,7 @@ int main() {
   // 18216
   // printf("thrust == %d\n", thrust);
 
-  vector<int> max_phases;
+  std::vector<int> max_phases;
   int max_thrust =
       maximizeAmplifiersThrust(data, /* in_loop */ true, &max_phases);
   printf("max_thrust: %d\n", max_thrust);

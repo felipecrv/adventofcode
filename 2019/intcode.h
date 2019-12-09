@@ -318,7 +318,7 @@ struct VM {
   std::unordered_map<Word, Word> _extra_mem;
 };
 
-Program runProgramAndGetOutput(std::string program, const Program &input) {
+Program runProgramAndGetOutput(Program program, const Program &input) {
   VM vm(std::move(program));
   for (auto i : input) {
     vm.pushInput(i);
@@ -336,11 +336,11 @@ Program runProgramAndGetOutput(std::string program, const Program &input) {
   return output;
 }
 
-Program runProgramAndGetOutput(std::string program, Word input) {
+Program runProgramAndGetOutput(Program program, Word input) {
   return runProgramAndGetOutput(std::move(program), Program({input}));
 }
 
-Word runProgramAndGetFirstOutput(std::string program, const Program &input) {
+Word runProgramAndGetFirstOutput(Program program, const Program &input) {
   VM vm(std::move(program));
   for (auto i : input) {
     vm.pushInput(i);
@@ -349,6 +349,6 @@ Word runProgramAndGetFirstOutput(std::string program, const Program &input) {
   return vm.consumeOutput();
 }
 
-Word runProgramAndGetFirstOutput(std::string program, Word input) {
+Word runProgramAndGetFirstOutput(Program program, Word input) {
   return runProgramAndGetFirstOutput(std::move(program), Program({input}));
 }

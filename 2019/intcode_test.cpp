@@ -57,55 +57,55 @@ TEST_CASE("Day 5: Sunny with a Chance of Asteroids", "[intcode]") {
   }
 
   SECTION("Position mode examples") {
-    auto is_equal_to_8 = "3,9,8,9,10,9,4,9,99,-1,8";
+    auto is_equal_to_8 = parseProgram("3,9,8,9,10,9,4,9,99,-1,8");
     REQUIRE(runProgramAndGetFirstOutput(is_equal_to_8, 7) == 0);
     REQUIRE(runProgramAndGetFirstOutput(is_equal_to_8, 8) == 1);
     REQUIRE(runProgramAndGetFirstOutput(is_equal_to_8, 9) == 0);
 
-    auto less_than_8 = "3,9,7,9,10,9,4,9,99,-1,8";
+    auto less_than_8 = parseProgram("3,9,7,9,10,9,4,9,99,-1,8");
     REQUIRE(runProgramAndGetFirstOutput(less_than_8, 7) == 1);
     REQUIRE(runProgramAndGetFirstOutput(less_than_8, 8) == 0);
     REQUIRE(runProgramAndGetFirstOutput(less_than_8, 9) == 0);
   }
 
   SECTION("Immediate mode examples") {
-    auto equal_to_8 = "3,3,1108,-1,8,3,4,3,99";
+    auto equal_to_8 = parseProgram("3,3,1108,-1,8,3,4,3,99");
     REQUIRE(runProgramAndGetFirstOutput(equal_to_8, 7) == 0);
     REQUIRE(runProgramAndGetFirstOutput(equal_to_8, 8) == 1);
     REQUIRE(runProgramAndGetFirstOutput(equal_to_8, 9) == 0);
 
-    auto less_than_8 = "3,3,1107,-1,8,3,4,3,99";
+    auto less_than_8 = parseProgram("3,3,1107,-1,8,3,4,3,99");
     REQUIRE(runProgramAndGetFirstOutput(less_than_8, 7) == 1);
     REQUIRE(runProgramAndGetFirstOutput(less_than_8, 8) == 0);
     REQUIRE(runProgramAndGetFirstOutput(less_than_8, 9) == 0);
   }
 
   SECTION("Jump example with position mode") {
-    auto is_non_zero = "3,12,6,12,15,1,13,14,13,4,13,99,-1,0,1,9";
+    auto is_non_zero = parseProgram("3,12,6,12,15,1,13,14,13,4,13,99,-1,0,1,9");
     REQUIRE(runProgramAndGetFirstOutput(is_non_zero, 0) == 0);
     REQUIRE(runProgramAndGetFirstOutput(is_non_zero, 1) == 1);
     REQUIRE(runProgramAndGetFirstOutput(is_non_zero, 666) == 1);
   }
 
   SECTION("Jump example with immediate mode") {
-    auto is_non_zero = "3,3,1105,-1,9,1101,0,0,12,4,12,99,1";
+    auto is_non_zero = parseProgram("3,3,1105,-1,9,1101,0,0,12,4,12,99,1");
     REQUIRE(runProgramAndGetFirstOutput(is_non_zero, 0) == 0);
     REQUIRE(runProgramAndGetFirstOutput(is_non_zero, 1) == 1);
     REQUIRE(runProgramAndGetFirstOutput(is_non_zero, 666) == 1);
   }
 
   SECTION("Larger example") {
-    auto cmp_8_plus_1000 =
+    auto cmp_8_plus_1000 = parseProgram(
         "3,21,1008,21,8,20,1005,20,22,107,8,21,20,1006,20,31,1106,0,36,98,0,0,"
         "1002,21,125,20,4,20,1105,1,46,104,999,1105,1,46,1101,1000,1,20,4,20,"
-        "1105,1,46,98,99";
+        "1105,1,46,98,99");
     REQUIRE(runProgramAndGetFirstOutput(cmp_8_plus_1000, 7) == 999);
     REQUIRE(runProgramAndGetFirstOutput(cmp_8_plus_1000, 8) == 1000);
     REQUIRE(runProgramAndGetFirstOutput(cmp_8_plus_1000, 9) == 1001);
   }
 
   SECTION("Full program") {
-    auto diagnostic_program =
+    auto diagnostic_program = parseProgram(
         "3,225,1,225,6,6,1100,1,238,225,104,0,1102,7,85,225,1102,67,12,225,102,"
         "36,65,224,1001,224,-3096,224,4,224,1002,223,8,223,101,4,224,224,1,224,"
         "223,223,1001,17,31,224,1001,224,-98,224,4,224,1002,223,8,223,101,5,"
@@ -143,7 +143,7 @@ TEST_CASE("Day 5: Sunny with a Chance of Asteroids", "[intcode]") {
         "1006,224,629,101,1,223,223,108,677,677,224,1002,223,2,223,1005,224,"
         "644,1001,223,1,223,1107,226,226,224,102,2,223,223,1005,224,659,101,1,"
         "223,223,1108,226,677,224,102,2,223,223,1005,224,674,101,1,223,223,4,"
-        "223,99,226";
+        "223,99,226");
     REQUIRE(runProgramAndGetOutput(diagnostic_program, 1) ==
             Program({0, 0, 0, 0, 0, 0, 0, 0, 0, 9775037}));
     REQUIRE(runProgramAndGetFirstOutput(diagnostic_program, 5) == 15586959);
@@ -279,12 +279,13 @@ TEST_CASE("Day 9: Sensor Boost", "[intcode]") {
   }
 
   SECTION("Quine") {
-    auto prog = "109,1,204,-1,1001,100,1,100,1008,100,16,101,1006,101,0,99";
-    REQUIRE(runProgramAndGetOutput(prog, {}) == parseProgram(prog));
+    auto prog = parseProgram(
+        "109,1,204,-1,1001,100,1,100,1008,100,16,101,1006,101,0,99");
+    REQUIRE(runProgramAndGetOutput(prog, {}) == prog);
   }
 
   SECTION("64-bit support") {
-    auto prog = "1102,34915192,34915192,7,4,7,99,0";
+    auto prog = parseProgram("1102,34915192,34915192,7,4,7,99,0");
     VM vm(prog);
     vm.run();
     REQUIRE(vm.status == HALTED);
@@ -292,7 +293,7 @@ TEST_CASE("Day 9: Sensor Boost", "[intcode]") {
   }
 
   SECTION("Print long long number") {
-    auto prog = "104,1125899906842624,99";
+    auto prog = parseProgram("104,1125899906842624,99");
     VM vm(prog);
     vm.run();
     REQUIRE(vm.status == HALTED);
@@ -300,7 +301,7 @@ TEST_CASE("Day 9: Sensor Boost", "[intcode]") {
   }
 
   SECTION("Full program") {
-    auto prog =
+    auto prog = parseProgram(
         "1102,34463338,34463338,63,1007,63,34463338,63,1005,63,53,1102,1,3,"
         "1000,109,988,209,12,9,1000,209,6,209,3,203,0,1008,1000,1,63,1005,63,"
         "65,1008,1000,2,63,1005,63,904,1008,1000,0,63,1005,63,58,4,25,104,0,99,"
@@ -350,7 +351,7 @@ TEST_CASE("Day 9: Sensor Boost", "[intcode]") {
         "64,99,21102,27,1,1,21101,915,0,0,1105,1,922,21201,1,29830,1,204,1,99,"
         "109,3,1207,-2,3,63,1005,63,964,21201,-2,-1,1,21101,0,942,0,1105,1,922,"
         "21202,1,1,-1,21201,-2,-3,1,21102,1,957,0,1105,1,922,22201,1,-1,-2,"
-        "1105,1,968,21201,-2,0,-2,109,-3,2106,0,0";
+        "1105,1,968,21201,-2,0,-2,109,-3,2106,0,0");
 
     // IN=1 runs checks on the Intcode implementation and outputs problematic
     // opcodes instead of just 2745604242

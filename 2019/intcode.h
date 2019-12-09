@@ -2,6 +2,7 @@
 #include <cassert>
 #include <cstdio>
 #include <cstring>
+#include <unordered_map>
 #include <queue>
 #include <string>
 #include <vector>
@@ -14,14 +15,15 @@
 #define JMP_IF_FALSE 6
 #define LT 7
 #define EQ 8
+#define UBP 9  // update base pointer
 #define HLT 99
 
-std::vector<int> parseProgram(const std::string &ss) {
-  std::vector<int> program;
+std::vector<long long> parseProgram(const std::string &ss) {
+  std::vector<long long> program;
 
   const char *s = ss.c_str();
   bool done = false;
-  for (int code; !done && sscanf(s, "%d", &code) == 1;) {
+  for (long long code; !done && sscanf(s, "%lld", &code) == 1;) {
     program.push_back(code);
     if (*s == '-' || isspace(*s)) {
       s++;
@@ -46,7 +48,7 @@ enum Status {
 };
 
 struct VM {
-  VM(std::vector<int> program) : _mem(std::move(program)) { clearState(); }
+  VM(std::vector<long long> program) : _mem(std::move(program)) { clearState(); }
 
   explicit VM(const std::string &program) : VM(parseProgram(program)) {}
 
@@ -98,38 +100,43 @@ struct VM {
     int mode2 = -1;
 
     // decode
-    int op = deref(pc);
+    long long op = deref(pc);
     opcode = op % 100;
     switch (opcode) {
       case ADD:
       case MUL:
       case LT:
       case EQ:
-        mode0 = (op % 1000) / 100;
-        mode1 = (op % 10000) / 1000;
-        mode2 = op / 10000;
+        mode0 = (op / 100) % 10;
+        mode1 = (op / 1000) % 10;
+        mode2 = (op / 10000) % 10;
 
         fetchArg(mode0, deref(pc + 1), &r0);
         fetchArg(mode1, deref(pc + 2), &r1);
         fetchDestArg(mode2, deref(pc + 3), &r2);
         break;
       case IN:
-        mode0 = (op % 1000) / 100;
+        mode0 = (op / 100) % 10;
 
         fetchDestArg(mode0, deref(pc + 1), &r2);
         break;
       case OUT:
-        mode0 = (op % 1000) / 100;
+        mode0 = (op / 100) % 10;
 
         fetchArg(mode0, deref(pc + 1), &r0);
         break;
       case JMP_IF_TRUE:
       case JMP_IF_FALSE:
-        mode0 = (op % 1000) / 100;
-        mode1 = (op % 10000) / 1000;
+        mode0 = (op / 100) % 10;
+        mode1 = (op / 1000) % 10;
 
         fetchArg(mode0, deref(pc + 1), &r0);
         fetchArg(mode1, deref(pc + 2), &r1);
+        break;
+      case UBP:
+        mode0 = (op / 100) % 10;
+
+        fetchArg(mode0, deref(pc + 1), &r0);
         break;
       case HLT:
         break;
@@ -148,7 +155,7 @@ struct VM {
       case IN:
         if (hasInput()) {
           *r2 = consumeInput();
-          printf("IN %d\n", *r2);
+          printf("IN %lld\n", *r2);
           pc += 2;
         } else {
           printf("IN <pending>\n");
@@ -158,7 +165,7 @@ struct VM {
         }
         break;
       case OUT: {
-        printf("OUT %d\n", r0);
+        printf("OUT %lld\n", r0);
         pushOutput(r0);
         pc += 2;
         break;
@@ -185,6 +192,10 @@ struct VM {
         *r2 = r0 == r1 ? 1 : 0;
         pc += 4;
         break;
+      case UBP:
+        bp = bp + r0;
+        pc += 2;
+        break;
       case HLT:
         printf("HLT\n");
         pc += 1;
@@ -194,60 +205,74 @@ struct VM {
     }
   }
 
-  void fetchArg(int mode, int mem_cell_val, int *out_reg) {
+  void fetchArg(int mode, long long mem_cell_val, long long *out_reg) {
     if (mode == 0) {  // pos
       *out_reg = deref(mem_cell_val);
     } else if (mode == 1) {  // immediate
       *out_reg = mem_cell_val;
+    } else if (mode == 2) {  // relative to bp
+      *out_reg = deref(bp + mem_cell_val);
     } else {
       assert(false && "invalid mode");
     }
   }
 
-  void fetchDestArg(int mode, int mem_cell_val, int **out_reg) {
+  void fetchDestArg(int mode, long long mem_cell_val, long long **out_reg) {
     if (mode == 0) {
       *out_reg = derefDest(mem_cell_val);
     } else if (mode == 1) {
       assert(false && "dest param will never be in immediate mode");
+    } else if (mode == 2) {
+      *out_reg = derefDest(bp + mem_cell_val);
     } else {
       assert(false && "invalid mode");
     }
   }
 
-  int deref(int addr) {
-    // printf("deref[%d]: ", addr);
-    assert(addr >= 0 && addr < _mem.size());
-    int val = _mem[addr];
-    // printf("%d\n", val);
+  long long deref(long long addr) {
+    // printf("deref[%lld]: ", addr);
+    assert(addr >= 0);
+    long long val = 0;
+    if (addr >= _mem.size()) {
+      val = _extra_mem[addr];
+    } else {
+      val = _mem[addr];
+    }
+    // printf("%lld\n", val);
     return val;
   }
 
-  int *derefDest(int addr) {
-    // printf("deref[%d]*: ", addr);
-    assert(addr >= 0 && addr < _mem.size());
-    int *val = &_mem[addr];
-    // printf("%d\n", *val);
+  long long *derefDest(long long addr) {
+    // printf("deref[%lld]*: ", addr);
+    assert(addr >= 0);
+    long long *val = nullptr;
+    if (addr >= _mem.size()) {
+      val = &_extra_mem[addr];
+    } else {
+      val = &_mem[addr];
+    }
+    // printf("%lld\n", *val);
     return val;
   }
 
-  void pushInput(int value) { _input.push(value); }
+  void pushInput(long long value) { _input.push(value); }
 
   bool hasInput() const { return !_input.empty(); }
 
-  int consumeInput() {
+  long long consumeInput() {
     assert(!_input.empty());
-    int value = _input.front();
+    long long value = _input.front();
     _input.pop();
     return value;
   }
 
-  void pushOutput(int value) { _output.push(value); }
+  void pushOutput(long long value) { _output.push(value); }
 
   bool hasOutput() const { return !_output.empty(); }
 
-  int consumeOutput() {
+  long long consumeOutput() {
     assert(hasOutput());
-    int value = _output.front();
+    long long value = _output.front();
     _output.pop();
     return value;
   }
@@ -262,55 +287,59 @@ struct VM {
     pc = 0;
     opcode = 0;
 
+    bp = 0;
     clearRegisters();
 
     status = PAUSED;
 
-    _input = std::queue<int>();
-    _output = std::queue<int>();
+    _input = std::queue<long long>();
+    _output = std::queue<long long>();
   }
 
   int pc;
-  int opcode;
+  long long opcode;
 
-  int r0;
-  int r1;
-  int *r2;
+  long long bp;  // base pointer
+
+  long long r0;
+  long long r1;
+  long long *r2;
 
   enum Status status;
 
  private:
-  std::queue<int> _input;
-  std::queue<int> _output;
+  std::queue<long long> _input;
+  std::queue<long long> _output;
 
-  std::vector<int> _mem;
+  std::vector<long long> _mem;
+  std::unordered_map<long long, long long> _extra_mem;
 };
 
-std::vector<int> runProgramAndGetOutput(std::string program,
-                                        const std::vector<int> &input) {
+std::vector<long long> runProgramAndGetOutput(std::string program,
+                                        const std::vector<long long> &input) {
   VM vm(std::move(program));
   for (auto i : input) {
     vm.pushInput(i);
   }
 
-  std::vector<int> output;
+  std::vector<long long> output;
   for (;;) {
     vm.runUntilOutput();
     if (vm.status == HALTED) {
       break;
     }
-    int out = vm.consumeOutput();
+    long long out = vm.consumeOutput();
     output.push_back(out);
   }
   return output;
 }
 
-std::vector<int> runProgramAndGetOutput(std::string program, int input) {
-  return runProgramAndGetOutput(std::move(program), std::vector<int>({input}));
+std::vector<long long> runProgramAndGetOutput(std::string program, long long input) {
+  return runProgramAndGetOutput(std::move(program), std::vector<long long>({input}));
 }
 
-int runProgramAndGetFirstOutput(std::string program,
-                                const std::vector<int> &input) {
+long long runProgramAndGetFirstOutput(std::string program,
+                                const std::vector<long long> &input) {
   VM vm(std::move(program));
   for (auto i : input) {
     vm.pushInput(i);
@@ -319,7 +348,7 @@ int runProgramAndGetFirstOutput(std::string program,
   return vm.consumeOutput();
 }
 
-int runProgramAndGetFirstOutput(std::string program, int input) {
+long long runProgramAndGetFirstOutput(std::string program, long long input) {
   return runProgramAndGetFirstOutput(std::move(program),
-                                     std::vector<int>({input}));
+                                     std::vector<long long>({input}));
 }

@@ -22,6 +22,24 @@ using Word = long long;
 using Program = std::vector<Word>;
 using Buffer = std::vector<Word>;
 
+struct Device {
+  bool hasData() const { return !_fifo.empty(); }
+
+  Word consume() {
+    assert(hasData());
+    Word word = _fifo.front();
+    _fifo.pop();
+    return word;
+  }
+
+  void produce(Word word) { _fifo.push(word); }
+
+  void clear() { _fifo = std::queue<Word>(); }
+
+ private:
+  std::queue<Word> _fifo;
+};
+
 Program parseProgram(const std::string &ss) {
   Program program;
 
@@ -259,27 +277,13 @@ struct VM {
     return val;
   }
 
-  void pushInput(Word value) { _input.push(value); }
+  void pushInput(Word word) { _input.produce(word); }
+  bool hasInput() const { return _input.hasData(); }
+  Word consumeInput() { return _input.consume(); }
 
-  bool hasInput() const { return !_input.empty(); }
-
-  Word consumeInput() {
-    assert(!_input.empty());
-    Word value = _input.front();
-    _input.pop();
-    return value;
-  }
-
-  void pushOutput(Word value) { _output.push(value); }
-
-  bool hasOutput() const { return !_output.empty(); }
-
-  Word consumeOutput() {
-    assert(hasOutput());
-    Word value = _output.front();
-    _output.pop();
-    return value;
-  }
+  void pushOutput(Word word) { _output.produce(word); }
+  bool hasOutput() const { return _output.hasData(); }
+  Word consumeOutput() { return _output.consume(); }
 
   void clearRegisters() {
     r0 = 0;
@@ -296,8 +300,8 @@ struct VM {
 
     status = PAUSED;
 
-    _input = std::queue<Word>();
-    _output = std::queue<Word>();
+    _input.clear();
+    _output.clear();
   }
 
   int pc;
@@ -312,8 +316,8 @@ struct VM {
   enum Status status;
 
  private:
-  std::queue<Word> _input;
-  std::queue<Word> _output;
+  Device _input;
+  Device _output;
 
   Buffer _mem;
   std::unordered_map<Word, Word> _extra_mem;

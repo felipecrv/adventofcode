@@ -2,9 +2,9 @@
 #include <cassert>
 #include <cstdio>
 #include <cstring>
-#include <unordered_map>
 #include <queue>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #define ADD 1
@@ -301,7 +301,7 @@ struct VM {
   int pc;
   Word op;
 
-  Word bp; // base pointer
+  Word bp;  // base pointer
 
   Word r0;
   Word r1;
@@ -310,11 +310,11 @@ struct VM {
   enum Status status;
 
  private:
-   std::queue<Word> _input;
-   std::queue<Word> _output;
+  std::queue<Word> _input;
+  std::queue<Word> _output;
 
-   std::vector<Word> _mem;
-   std::unordered_map<Word, Word> _extra_mem;
+  std::vector<Word> _mem;
+  std::unordered_map<Word, Word> _extra_mem;
 };
 
 std::vector<Word> runProgramAndGetOutput(std::string program,

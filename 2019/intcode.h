@@ -70,9 +70,20 @@ enum Status {
 };
 
 struct CPU {
-  CPU(Program program) : _mem(std::move(program)) { clearState(); }
+  CPU() { clearState(); }
+
+  explicit CPU(Program program) {
+    clearState();
+    loadProgram(std::move(program));
+  }
 
   explicit CPU(const std::string &program) : CPU(parseProgram(program)) {}
+
+  void loadProgram(Program program) {
+    // loadProgram() does not clear the machine state, only registers
+    clearRegisters();
+    _mem = std::move(program);
+  }
 
   // Runs eagerly until it halts or IN instruction is executed
   // and the input queue is empty.

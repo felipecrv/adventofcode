@@ -235,6 +235,12 @@ struct CPU {
         // the run loop should look at the opcode,
         // change the status, and break the loop.
         break;
+
+      default:
+        fprintf(stderr, "intcode: bad op: %d\n", op);
+        assert(false && "intcode: bad op");
+        exit(1);
+        break;
     }
   }
 
@@ -316,7 +322,7 @@ struct CPU {
   }
 
   int pc;
-  Word op;
+  int op;
 
   Word bp;  // base pointer
 

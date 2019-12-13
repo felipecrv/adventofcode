@@ -34,6 +34,7 @@ struct Device {
 
   void produce(Word word) { _fifo.push(word); }
 
+  size_t size() const { return _fifo.size(); }
   void clear() { _fifo = std::queue<Word>(); }
 
  private:
@@ -124,6 +125,8 @@ struct CPU {
       }
     }
   }
+
+  const Device &output() const { return _output; }
 
   void decodeAndExecute() {
     clearRegisters();

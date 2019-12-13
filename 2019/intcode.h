@@ -89,6 +89,9 @@ struct CPU {
   // Runs eagerly until it halts or IN instruction is executed
   // and the input queue is empty.
   void run() {
+    if (status == HALTED) {
+      return;
+    }
     assert(status == PAUSED);
     status = RUNNING;
     for (;;) {
@@ -106,6 +109,9 @@ struct CPU {
 
   // Runs until it halts or an OUT instructions causes the CPU to pause.
   void runUntilOutput() {
+    if (status == HALTED) {
+      return;
+    }
     assert(status = PAUSED);
     status = RUNNING;
     for (;;) {

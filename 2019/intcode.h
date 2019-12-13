@@ -188,17 +188,17 @@ struct CPU {
       case IN:
         if (hasInput()) {
           *r2 = consumeInput();
-          printf("IN %lld\n", *r2);
+          // printf("IN %lld\n", *r2);
           pc += 2;
         } else {
-          printf("IN <pending>\n");
+          // printf("IN <pending>\n");
           // pause without incrementing the pc, so that when
           // resuming, the IN instruction gets executed again.
           status = PAUSED;
         }
         break;
       case OUT: {
-        printf("OUT %lld\n", r0);
+        // printf("OUT %lld\n", r0);
         pushOutput(r0);
         pc += 2;
         break;
@@ -230,7 +230,7 @@ struct CPU {
         pc += 2;
         break;
       case HLT:
-        printf("HLT\n");
+        // printf("HLT\n");
         pc += 1;
         // the run loop should look at the opcode,
         // change the status, and break the loop.
@@ -269,7 +269,6 @@ struct CPU {
   }
 
   Word deref(Word addr) {
-    // printf("deref[%lld]: ", addr);
     assert(addr >= 0);
     Word val = 0;
     if (addr >= _mem.size()) {
@@ -277,12 +276,10 @@ struct CPU {
     } else {
       val = _mem[addr];
     }
-    // printf("%lld\n", val);
     return val;
   }
 
   Word *derefDest(Word addr) {
-    // printf("deref[%lld]*: ", addr);
     assert(addr >= 0);
     Word *val = nullptr;
     if (addr >= _mem.size()) {
@@ -290,7 +287,6 @@ struct CPU {
     } else {
       val = &_mem[addr];
     }
-    // printf("%lld\n", *val);
     return val;
   }
 

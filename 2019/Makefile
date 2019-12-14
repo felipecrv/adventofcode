@@ -1,4 +1,4 @@
-CXXFLAGS=-g -Wall -std=c++11 -I./
+CXXFLAGS=-g -Wall -std=c++17 -I./
 LDFLAGS=-lm
 
 # Examples:

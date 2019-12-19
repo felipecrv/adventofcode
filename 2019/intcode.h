@@ -34,6 +34,12 @@ struct Device {
 
   void produce(Word word) { _fifo.push(word); }
 
+  void produce(const std::string &ascii) {
+    for (char c : ascii) {
+      _fifo.push(c);
+    }
+  }
+
   size_t size() const { return _fifo.size(); }
   void clear() { _fifo = std::queue<Word>(); }
 
@@ -300,6 +306,7 @@ struct CPU {
   }
 
   void pushInput(Word word) { _input.produce(word); }
+  void pushInput(const std::string &ascii) { _input.produce(ascii); }
   bool hasInput() const { return _input.hasData(); }
   Word consumeInput() { return _input.consume(); }
 

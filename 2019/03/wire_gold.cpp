@@ -5,56 +5,27 @@
 #include <unordered_map>
 #include <vector>
 
+#include "lib.h"
+
 using namespace std;
 
 #define MAXD 20000
 #define POSITIVE '+'
 #define NEGATIVE '-'
 
-struct Pt {
-  Pt() : x(0), y(0) {}
-
-  Pt(int x, int y) : x(x), y(y) {}
-
-  Pt &operator+=(Pt other) {
-    x += other.x;
-    y += other.y;
-    return *this;
-  }
-
-  bool operator==(const Pt &other) const {
-    return x == other.x && y == other.y;
-  }
-
-  int x;
-  int y;
-};
-
-namespace std {
-
-template <>
-struct hash<Pt> {
-  size_t operator()(const Pt &k) const {
-    std::hash<int> hasher;
-    return hasher(k.x) ^ hasher(k.y);
-  }
-};
-
-}  // namespace std
-
-Pt direction(char d) {
+Vec direction(char d) {
   switch (d) {
-    case 'U':
-      return Pt(0, 1);
-    case 'R':
-      return Pt(1, 0);
-    case 'D':
-      return Pt(0, -1);
-    case 'L':
-      return Pt(-1, 0);
+  case 'U':
+    return Vec(0, 1);
+  case 'R':
+    return Vec(1, 0);
+  case 'D':
+    return Vec(0, -1);
+  case 'L':
+    return Vec(-1, 0);
   }
   assert(false);
-  return Pt();
+  return Vec();
 }
 
 struct Grid {
@@ -74,17 +45,17 @@ struct Grid {
     return _grid[i][j];
   }
 
-  char &cell(Pt p) { return cell(p.x, p.y); }
+  char &cell(Vec p) { return cell(p.x, p.y); }
 
   void drawFromInput(char wire) {
-    _cursor = Pt(0, 0);
+    _cursor = Vec(0, 0);
 
     for (;;) {
       char d;
       int steps;
       scanf("%c%d", &d, &steps);
       char c = getchar();
-      Pt dir = direction(d);
+      Vec dir = direction(d);
       drawSegment(wire, dir, steps);
       if (c == '\n' || c == EOF) {
         break;
@@ -94,7 +65,7 @@ struct Grid {
     }
   }
 
-  void drawSegment(char wire, Pt dir, int steps) {
+  void drawSegment(char wire, Vec dir, int steps) {
     auto &total_steps_map =
         wire == POSITIVE ? _total_steps_positive : _total_steps_negative;
 
@@ -114,10 +85,10 @@ struct Grid {
   }
 
   char _grid[MAXD + 1 + MAXD][MAXD + 1 + MAXD];
-  Pt _cursor;
-  vector<Pt> _crosses;
-  unordered_map<Pt, int> _total_steps_negative;
-  unordered_map<Pt, int> _total_steps_positive;
+  Vec _cursor;
+  vector<Vec> _crosses;
+  unordered_map<Vec, int> _total_steps_negative;
+  unordered_map<Vec, int> _total_steps_positive;
 };
 
 Grid grid;

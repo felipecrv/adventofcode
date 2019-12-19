@@ -7,25 +7,7 @@
 #include <unordered_set>
 #include <vector>
 
-struct Vec {
-  Vec() : x(0), y(0) {}
-
-  Vec(int x, int y) : x(x), y(y) {}
-
-  Vec operator+(Vec b) const { return Vec(x + b.x, y + b.y); }
-  Vec operator-(Vec b) const { return Vec(x - b.x, y - b.y); }
-
-  bool operator==(const Vec &other) const {
-    return x == other.x && y == other.y;
-  }
-
-  bool operator!=(const Vec &other) const { return !(*this == other); }
-
-  bool isNull() const { return x == 0 && y == 0; }
-
-  int x;
-  int y;
-};
+#include "lib.h"
 
 struct MemoizationKey {
   MemoizationKey(uint32_t keychain, Vec pos) : keychain(keychain), pos(pos) {}
@@ -38,20 +20,7 @@ struct MemoizationKey {
   Vec pos;
 };
 
-template <typename T> void hash_combine(std::size_t &seed, const T &val) {
-  seed ^= std::hash<T>()(val) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-}
-
 namespace std {
-
-template <> struct hash<Vec> {
-  size_t operator()(const Vec &v) const {
-    size_t h = 0;
-    hash_combine(h, v.x);
-    hash_combine(h, v.y);
-    return h;
-  }
-};
 
 template <> struct hash<MemoizationKey> {
   size_t operator()(const MemoizationKey &s) const {
@@ -63,16 +32,6 @@ template <> struct hash<MemoizationKey> {
 };
 
 } // namespace std
-
-template <typename MapType>
-typename MapType::mapped_type *lookup(MapType &m,
-                                      const typename MapType::key_type &k) {
-  auto it = m.find(k);
-  if (it != m.end()) {
-    return &it->second;
-  }
-  return nullptr;
-}
 
 bool contains(const std::unordered_set<Vec> &s, Vec v) {
   return s.find(v) != s.end();

@@ -4,23 +4,7 @@
 #include <cstdio>
 
 #include "intcode.h"
-
-struct Vec {
-  Vec() : x(0), y(0) {}
-
-  Vec(int x, int y) : x(x), y(y) {}
-
-  Vec operator+(Vec b) const { return Vec(x + b.x, y + b.y); }
-
-  bool operator==(const Vec &other) const {
-    return x == other.x && y == other.y;
-  }
-
-  int lengthSquared() const { return x * x + y * y; }
-
-  int x;
-  int y;
-};
+#include "lib.h"
 
 const int SHIP_SIZE = 100;
 const int MAXN = 50;

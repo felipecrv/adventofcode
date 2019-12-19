@@ -5,17 +5,9 @@
 #include <string>
 #include <unordered_map>
 
-using namespace std;
+#include "lib.h"
 
-template <typename MapType>
-typename MapType::mapped_type *lookup(MapType &m,
-                                      const typename MapType::key_type &k) {
-  auto it = m.find(k);
-  if (it != m.end()) {
-    return &it->second;
-  }
-  return nullptr;
-}
+using namespace std;
 
 unordered_map<string, string> parent;
 

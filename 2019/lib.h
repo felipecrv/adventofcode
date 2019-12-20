@@ -67,6 +67,15 @@ template <> struct hash<Vec> {
   }
 };
 
+template <typename A, typename B> struct hash<std::pair<A, B>> {
+  size_t operator()(const std::pair<A, B> &k) const {
+    size_t h = 0;
+    hash_combine(h, k.first);
+    hash_combine(h, k.second);
+    return h;
+  }
+};
+
 } // namespace std
 
 // Math functions

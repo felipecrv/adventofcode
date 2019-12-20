@@ -21,19 +21,6 @@ Vec cardinals[] = {
     NORTH, EAST, SOUTH, WEST,
 };
 
-namespace std {
-
-template <> struct hash<pair<Vec, int>> {
-  size_t operator()(const pair<Vec, int> &k) const {
-    size_t h = 0;
-    hash_combine(h, k.first);
-    hash_combine(h, k.second);
-    return h;
-  }
-};
-
-} // namespace std
-
 bool contains(const std::unordered_set<pair<Vec, int>> &s,
               const pair<Vec, int> &v) {
   return s.find(v) != s.end();

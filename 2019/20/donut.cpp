@@ -10,8 +10,6 @@
 
 #include "lib.h"
 
-using namespace std;
-
 #define NORTH Vec(0, -1)
 #define SOUTH Vec(0, 1)
 #define WEST Vec(-1, 0)
@@ -20,6 +18,9 @@ using namespace std;
 Vec cardinals[] = {
     NORTH, EAST, SOUTH, WEST,
 };
+
+using WorldPos = std::pair<Vec, int>;
+using Portal = std::pair<std::string, Vec>;
 
 struct Donut {
   Donut() { memset(_map, 0, sizeof(_map)); }
@@ -37,9 +38,9 @@ struct Donut {
           continue;
         }
 
-        auto &chosen =
-            (x >= width - 2 || y >= height - 3 || y == 1 || x == 1) ? outer
-                                                                    : inner;
+        auto &chosen = (x >= width - 2 || y >= height - 3 || y == 1 || x == 1)
+                           ? outer
+                           : inner;
 
         if (y == 1) {
           p[0] = _map[0][x];
@@ -56,7 +57,7 @@ struct Donut {
         }
 
         char prev_x = _map[y][x - 1];
-        if (prev_x && (prev_x == '.' || prev_x == '#')) {
+        if (prev_x && prev_x == '.') {
           p[0] = _map[y][x];
           p[1] = _map[y][x + 1];
           chosen.emplace_back(p, Vec(x - 1, y));
@@ -64,7 +65,7 @@ struct Donut {
         }
 
         char prev_y = _map[y - 1][x];
-        if (prev_y && (prev_y == '.' || prev_y == '#')) {
+        if (prev_y && prev_y == '.') {
           p[0] = _map[y][x];
           p[1] = _map[y + 1][x];
           chosen.emplace_back(p, Vec(x, y - 1));
@@ -72,7 +73,7 @@ struct Donut {
         }
 
         char next_x = _map[y][x + 1];
-        if (next_x && (next_x == '.' || next_x == '#')) {
+        if (next_x && next_x == '.') {
           char p[3];
           p[0] = _map[y][x - 1];
           p[1] = _map[y][x];
@@ -81,7 +82,7 @@ struct Donut {
         }
 
         char next_y = _map[y + 1][x];
-        if (next_y && (next_y == '.' || next_y == '#')) {
+        if (next_y && next_y == '.') {
           char p[3];
           p[0] = _map[y - 1][x];
           p[1] = _map[y][x];
@@ -97,7 +98,6 @@ struct Donut {
       } else if (o.first == "ZZ") {
         ZZ = o.second;
       }
-      printf("%s\n", o.first.c_str());
       for (auto &i : inner) {
         if (o.first == i.first && o.second != i.second) {
           outer_exits[o.second] = i.second;
@@ -107,69 +107,48 @@ struct Donut {
     }
   }
 
-  int findShortestPath() {
-    unordered_set<pair<Vec, int>> visited;
-    unordered_map<pair<Vec, int>, int> dist;
-    queue<pair<Vec, int>> q;
+  int findShortestPath(bool multi_worlds) {
+    std::unordered_set<WorldPos> visited;
+    std::unordered_map<WorldPos, int> dist;
+    std::queue<WorldPos> q;
+    std::vector<WorldPos> border;
 
-    pair<Vec, int> source = make_pair(AA, 0); // 0 is the outermost world
+    WorldPos source(AA, 0); // 0 is the outermost world
     visited.insert(source);
     dist[source] = 0;
     q.push(source);
+
     while (!q.empty()) {
       auto v = q.front();
       q.pop();
 
-      if (v == make_pair(ZZ, 0)) {
+      if (v == std::make_pair(ZZ, 0)) {
         // found ZZ in the outermost world
         return dist[v];
       }
 
+      border.clear();
       for (auto &dir : cardinals) {
-        auto w = make_pair(v.first + dir, v.second);
-        char c = _map[w.first.y][w.first.x];
-        if (c != '.') {
-          continue;
-        }
-        if (contains(visited, w)) {
-          continue;
-        }
-        visited.insert(w);
-
-        dist[w] = dist[v] + 1;
-
-        q.push(w);
+        border.emplace_back(v.first + dir, v.second);
       }
+      // edge to outer worlds
       if (v.second > 0) {
-        if (Vec *w_vec = lookup(outer_exits, v.first)) {
-          // leaving to an outer world
-          auto w = make_pair(*w_vec, v.second - 1);
-
-          char c = _map[w_vec->y][w_vec->x];
-          assert(c == '.');
-          if (contains(visited, w)) {
-            continue;
-          }
-          visited.insert(w);
-
-          dist[w] = dist[v] + 1;
-
-          q.push(w);
+        if (Vec *exit = lookup(outer_exits, v.first)) {
+          border.emplace_back(*exit, multi_worlds ? v.second - 1 : 0);
         }
       }
-      if (Vec *w_vec = lookup(inner_exits, v.first)) {
-        // leaving to an inner world
-        auto w = make_pair(*w_vec, v.second + 1);
+      // edge to inner worlds
+      if (Vec *exit = lookup(inner_exits, v.first)) {
+        border.emplace_back(*exit, multi_worlds ? v.second + 1 : 0);
+      }
 
-        char c = _map[w_vec->y][w_vec->x];
-        assert(c == '.');
-        if (contains(visited, w)) {
+      for (auto &w : border) {
+        char c = _map[w.first.y][w.first.x];
+        if (c != '.' || contains(visited, w)) {
           continue;
         }
         visited.insert(w);
-
         dist[w] = dist[v] + 1;
-
         q.push(w);
       }
     }
@@ -179,35 +158,21 @@ struct Donut {
   }
 
   void render(int width, int height) {
-    /*
-    for (auto & [ _, pos ] : inner) {
-      _map[pos.y][pos.x] = '@';
-    }
-    for (auto & [ _, pos ] : outer) {
-      _map[pos.y][pos.x] = 'X';
-    }
-    */
-
-    for (int i = 0; i < height; i++) {
-      bool printed_something = false;
-      for (int j = 0; j < width; j++) {
-        if (_map[i][j]) {
-          putchar(_map[i][j]);
-          printed_something = true;
-        }
+    for (int y = 0; y < height; y++) {
+      for (int x = 0; x < width; x++) {
+        putchar(_map[y][x]);
       }
-      if (printed_something)
-        putchar('\n');
+      putchar('\n');
     }
     putchar('\n');
   }
 
   Vec AA;
   Vec ZZ;
-  vector<pair<string, Vec>> inner;
-  vector<pair<string, Vec>> outer;
-  unordered_map<Vec, Vec> inner_exits;
-  unordered_map<Vec, Vec> outer_exits;
+  std::vector<Portal> inner;
+  std::vector<Portal> outer;
+  std::unordered_map<Vec, Vec> inner_exits;
+  std::unordered_map<Vec, Vec> outer_exits;
   char _map[MAXN][MAXN];
 };
 
@@ -227,8 +192,8 @@ int main() {
       continue;
     }
 
-    width = max(width, x + 1);
-    height = max(height, y + 1);
+    width = std::max(width, x + 1);
+    height = std::max(height, y + 1);
 
     donut._map[y][x] = c;
     x += 1;
@@ -237,8 +202,10 @@ int main() {
   donut.findExits(width, height);
   donut.render(width, height);
 
-  int dist = donut.findShortestPath();
-  printf("%d\n", dist);
+  // change to false for first phase of the problem
+  bool multi_worlds = true;
+  int dist = donut.findShortestPath(multi_worlds);
+  printf("Distance AA -> ZZ = %d\n", dist);
 
   return 0;
 }

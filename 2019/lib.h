@@ -50,6 +50,11 @@ typename MapType::mapped_type *lookup(MapType &m,
   return nullptr;
 }
 
+template <typename Container>
+bool contains(const Container &s, const typename Container::value_type &v) {
+  return s.find(v) != s.end();
+}
+
 template <typename T> void hash_combine(std::size_t &seed, const T &val) {
   seed ^= std::hash<T>()(val) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
 }

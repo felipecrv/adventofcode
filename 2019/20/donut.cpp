@@ -21,11 +21,6 @@ Vec cardinals[] = {
     NORTH, EAST, SOUTH, WEST,
 };
 
-bool contains(const std::unordered_set<pair<Vec, int>> &s,
-              const pair<Vec, int> &v) {
-  return s.find(v) != s.end();
-}
-
 struct Donut {
   Donut() { memset(_map, 0, sizeof(_map)); }
 

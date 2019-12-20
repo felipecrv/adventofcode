@@ -33,10 +33,6 @@ template <> struct hash<MemoizationKey> {
 
 } // namespace std
 
-bool contains(const std::unordered_set<Vec> &s, Vec v) {
-  return s.find(v) != s.end();
-}
-
 #define NORTH Vec(0, -1)
 #define SOUTH Vec(0, 1)
 #define WEST Vec(-1, 0)

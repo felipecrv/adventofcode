@@ -73,9 +73,10 @@ Program parseProgram(const std::string &ss) {
 }
 
 enum Status {
-  RUNNING = 0,
-  HALTED = 1,
-  PAUSED = 2  // because of I/O or on purpose
+  PAUSED = 0,
+  RUNNING = 1,
+  PENDING_IN = 2,
+  HALTED = 3,
 };
 
 struct CPU {
@@ -104,28 +105,27 @@ struct CPU {
     status = RUNNING;
     for (;;) {
       decodeAndExecute();
+      if (status == PENDING_IN) {
+        break;
+      }
       if (op == HLT) {
         assert(status == RUNNING);
         status = HALTED;
-        break;
-      }
-      if (status == PAUSED || status == HALTED) {
-        break;
+        return;
       }
     }
   }
 
   // Runs until it halts or an OUT instructions causes the CPU to pause.
   void runUntilOutput() {
-    if (status == HALTED) {
+    if (status == HALTED || status == PENDING_IN) {
       return;
     }
     assert(status == PAUSED);
     status = RUNNING;
     for (;;) {
       decodeAndExecute();
-      if (status == PAUSED) {
-        // an IN instruction can pause the CPU
+      if (status == PENDING_IN) {
         break;
       }
       if (op == HLT) {
@@ -203,15 +203,15 @@ struct CPU {
         pc += 4;
         break;
       case IN:
-        if (hasInput()) {
-          *r2 = consumeInput();
+        if (_input.hasData()) {
+          *r2 = _input.consume();
           // printf("IN %lld\n", *r2);
           pc += 2;
         } else {
           // printf("IN <pending>\n");
           // pause without incrementing the pc, so that when
           // resuming, the IN instruction gets executed again.
-          status = PAUSED;
+          status = PENDING_IN;
         }
         break;
       case OUT: {
@@ -310,7 +310,7 @@ struct CPU {
   void pushInput(Word word) { _input.produce(word); }
   void pushInput(const std::string &ascii) { _input.produce(ascii); }
   bool hasInput() const { return _input.hasData(); }
-  Word consumeInput() { return _input.consume(); }
+  // consumeInput() can only happen by executing an IN instruction
 
   void pushOutput(Word word) { _output.produce(word); }
   bool hasOutput() const { return _output.hasData(); }

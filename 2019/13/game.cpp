@@ -110,8 +110,7 @@ struct Game {
     while (cpu.status != HALTED) {
       for (;;) {
         cpu.decodeAndExecute();
-        if (cpu.status == PAUSED) {
-          // an IN instruction can pause the CPU
+        if (cpu.status == PENDING_IN) {
           return;
         }
         if (cpu.op == HLT) {

@@ -34,6 +34,11 @@ struct Device {
     return word;
   }
 
+  Word peek() {
+    assert(hasData());
+    return _fifo.front();
+  }
+
   void produce(Word word) { _fifo.push(word); }
 
   void produce(const std::string &ascii) {

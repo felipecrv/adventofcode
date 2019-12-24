@@ -120,7 +120,7 @@ struct CPU {
     if (status == HALTED) {
       return;
     }
-    assert(status = PAUSED);
+    assert(status == PAUSED);
     status = RUNNING;
     for (;;) {
       decodeAndExecute();

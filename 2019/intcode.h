@@ -95,13 +95,25 @@ struct CPU {
     _mem = std::move(program);
   }
 
-  // Runs eagerly until it halts or IN instruction is executed
-  // and the input queue is empty.
+  bool halted() const { return status == HALTED; }
+  bool paused() const { return status == PAUSED || status == PENDING_IN; }
+
+  // All methods below (before decodeAndExecute()) have
+  //
+  //   Pre-conditions:  halted() || paused()
+  //   Post-conditions: halted() || paused()
+  //
+  // where
+  //
+  //   paused() = (status == PAUSED || status == PENDING_IN)
+
+  // Runs eagerly until it halts or IN instruction
+  // is executed and the input queue is empty.
   void run() {
-    if (status == HALTED) {
+    if (halted()) {
       return;
     }
-    assert(status == PAUSED);
+    assert(paused());
     status = RUNNING;
     for (;;) {
       decodeAndExecute();
@@ -109,38 +121,34 @@ struct CPU {
         break;
       }
       if (op == HLT) {
-        assert(status == RUNNING);
         status = HALTED;
-        return;
+        break;
       }
     }
   }
 
   // Runs until it halts or an OUT instructions causes the CPU to pause.
   void runUntilOutput() {
-    if (status == HALTED || status == PENDING_IN) {
+    if (halted()) {
       return;
     }
-    assert(status == PAUSED);
+    assert(paused());
     status = RUNNING;
     for (;;) {
       decodeAndExecute();
       if (status == PENDING_IN) {
         break;
       }
-      if (op == HLT) {
-        assert(status == RUNNING);
-        status = HALTED;
+      if (op == OUT) {
+        status = PAUSED;  // pause on OUT
         break;
       }
-      if (op == OUT) {
-        status = PAUSED;
+      if (op == HLT) {
+        status = HALTED;
         break;
       }
     }
   }
-
-  const Device &output() const { return _output; }
 
   void decodeAndExecute() {
     clearRegisters();
@@ -315,6 +323,8 @@ struct CPU {
   void pushOutput(Word word) { _output.produce(word); }
   bool hasOutput() const { return _output.hasData(); }
   Word consumeOutput() { return _output.consume(); }
+
+  const Device &output() const { return _output; }
 
   void clearRegisters() {
     r0 = 0;

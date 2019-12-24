@@ -7,16 +7,18 @@
 #include <unordered_map>
 #include <vector>
 
-#define ADD 1
-#define MUL 2
-#define IN 3
-#define OUT 4
-#define JMP_IF_TRUE 5
-#define JMP_IF_FALSE 6
-#define LT 7
-#define EQ 8
-#define UBP 9  // update base pointer
-#define HLT 99
+enum Opcode {
+  ADD = 1,
+  MUL = 2,
+  IN = 3,
+  OUT = 4,
+  JMP_IF_TRUE = 5,
+  JMP_IF_FALSE = 6,
+  LT = 7,
+  EQ = 8,
+  UBP = 9,  // update base pointer
+  HLT = 99
+};
 
 using Word = long long;
 using Program = std::vector<Word>;

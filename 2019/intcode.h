@@ -155,6 +155,86 @@ struct CPU {
     }
   }
 
+  void runUntilIO() {
+    if (halted()) {
+      return;
+    }
+    assert(paused());
+    status = RUNNING;
+    for (;;) {
+      decodeAndExecute();
+      if (status == PENDING_IN) {
+        break;
+      }
+      if (op == OUT || op == IN) {
+        status = PAUSED;  // pause on IN/OUT
+        break;
+      }
+      if (op == HLT) {
+        status = HALTED;
+        break;
+      }
+    }
+  }
+
+  // Run a single instruction, and pause again.
+  void tick() {
+    if (halted()) {
+      return;
+    }
+    assert(paused());
+
+    status = RUNNING;
+    decodeAndExecute();
+    if (status == PENDING_IN) {
+      return;
+    }
+    if (op == HLT) {
+      status = HALTED;
+      return;
+    }
+
+    status = PAUSED;
+  }
+
+  // Try to consume to_consume values from the input buffer by executing
+  // the minimum amount of instructions necessary.  Returns the number of
+  // consumed values.
+  int consumeInput(int to_consume) {
+    const int initial_input_size = (int)_input.size();
+
+    int target_input_size = initial_input_size - to_consume;
+    if (target_input_size < 0) {
+      target_input_size = 0;
+    }
+
+    while (paused() && _input.hasData() && _input.size() != target_input_size) {
+      tick();
+    }
+
+    return initial_input_size - (int)_input.size();
+  }
+
+  // Consume a Day23 network packet from the input buffer.
+  [[nodiscard]] bool consumePacket() {
+    if (halted()) {
+      return false;
+    }
+    assert(paused());
+
+    if (_input.size() == 0) {
+      // nothing to do
+      return false;
+    }
+
+    if (_input.size() == 1) {
+      assert(_input.peek() == -1 && "expected a no-packet indicator");
+      return consumeInput(1) == 1;
+    }
+
+    return consumeInput(2) == 2;
+  }
+
   void decodeAndExecute() {
     clearRegisters();
 

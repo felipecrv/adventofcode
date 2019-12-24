@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cassert>
+#include <numeric> // for std::__gcd
 #include <unordered_map>
 
 // Useful classes
@@ -83,12 +84,48 @@ template <typename A, typename B> struct hash<std::pair<A, B>> {
 
 } // namespace std
 
-// Math functions
+// Math
 
 long long gcd(long long a, long long b) {
-  if (a == 0)
-    return b;
-  return gcd(b % a, a);
+  // if (a == 0) return b;
+  // return gcd(b % a, a);
+
+  return (long long)std::gcd((unsigned long long)a, (unsigned long long)b);
 }
 
 long long lcm(long long a, long long b) { return (a * b) / gcd(a, b); }
+
+struct Frac {
+  Frac(long long num = 0, long long den = 1) { set(num, den); }
+
+  void set(long long num_, long long den_) {
+    num = num_ / gcd(num_, den_);
+    den = den_ / gcd(num_, den_);
+    if (den < 0) {
+      num *= -1;
+      den *= -1;
+    }
+  }
+
+  void operator*=(Frac f) { set(num * f.num, den * f.den); }
+  void operator+=(Frac f) { set(num * f.den + f.num * den, den * f.den); }
+  void operator-=(Frac f) { set(num * f.den - f.num * den, den * f.den); }
+  void operator/=(Frac f) { set(num * f.den, den * f.num); }
+
+  long long num;
+  long long den;
+};
+
+/* clang-format off */
+bool operator==(Frac a, Frac b) { return a.num * b.den == b.num * a.den; }
+bool operator!=(Frac a, Frac b) { return !(a == b); }
+bool operator<(Frac a, Frac b) { return a.num * b.den < b.num * a.den; }
+bool operator<=(Frac a, Frac b) { return (a == b) || (a < b); }
+bool operator>(Frac a, Frac b) { return !(a <= b); }
+bool operator>=(Frac a, Frac b) { return !(a < b); }
+Frac operator/(Frac a, Frac b) { Frac ret = a; ret /= b; return ret; }
+Frac operator*(Frac a, Frac b) { Frac ret = a; ret *= b; return ret; }
+Frac operator+(Frac a, Frac b) { Frac ret = a; ret += b; return ret; }
+Frac operator-(Frac a, Frac b) { Frac ret = a; ret -= b; return ret; }
+Frac operator-(Frac f) { return 0 - f; }
+/* clang-format on */

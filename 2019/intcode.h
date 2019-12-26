@@ -235,6 +235,31 @@ struct CPU {
     return consumeInput(2) == 2;
   }
 
+  // Extra pre-condition: !hasOutput()
+  // Extra post-condition: !hasOutput()
+  void runConsumingOutput(std::string &out_str) {
+    assert(!hasOutput());
+    if (halted()) {
+      return;
+    }
+    assert(paused());
+    status = RUNNING;
+    for (;;) {
+      assert(!hasOutput());
+      decodeAndExecute();
+      if (hasOutput()) {
+        out_str += (char)consumeOutput();
+      }
+      if (status == PENDING_IN) {
+        break;
+      }
+      if (op == HLT) {
+        status = HALTED;
+        break;
+      }
+    }
+  }
+
   void decodeAndExecute() {
     clearRegisters();
 

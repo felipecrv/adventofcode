@@ -1,7 +1,7 @@
 #pragma once
 
 #include <cassert>
-#include <numeric> // for std::__gcd
+#include <numeric>  // for std::__gcd
 #include <unordered_map>
 
 // Useful classes
@@ -25,6 +25,8 @@ struct Vec {
 
   Vec operator+(Vec b) const { return Vec(x + b.x, y + b.y); }
   Vec operator-(Vec b) const { return Vec(x - b.x, y - b.y); }
+
+  Vec operator-() const { return Vec(-x, -y); }
 
   bool operator==(const Vec &other) const {
     return x == other.x && y == other.y;
@@ -56,7 +58,13 @@ bool contains(const Container &s, const typename Container::value_type &v) {
   return s.find(v) != s.end();
 }
 
-template <typename T> void hash_combine(std::size_t &seed, const T &val) {
+template <typename Container>
+bool linearContains(const Container &s, const typename Container::value_type &v) {
+  return std::find(s.begin(), s.end(), v) != s.end();
+}
+
+template <typename T>
+void hash_combine(std::size_t &seed, const T &val) {
   seed ^= std::hash<T>()(val) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
 }
 
@@ -64,7 +72,8 @@ template <typename T> void hash_combine(std::size_t &seed, const T &val) {
 
 namespace std {
 
-template <> struct hash<Vec> {
+template <>
+struct hash<Vec> {
   size_t operator()(const Vec &v) const {
     size_t h = 0;
     hash_combine(h, v.x);
@@ -73,7 +82,8 @@ template <> struct hash<Vec> {
   }
 };
 
-template <typename A, typename B> struct hash<std::pair<A, B>> {
+template <typename A, typename B>
+struct hash<std::pair<A, B>> {
   size_t operator()(const std::pair<A, B> &k) const {
     size_t h = 0;
     hash_combine(h, k.first);
@@ -82,7 +92,40 @@ template <typename A, typename B> struct hash<std::pair<A, B>> {
   }
 };
 
-} // namespace std
+template <>
+struct hash<vector<string>> {
+  size_t operator()(const vector<string> &v) const {
+    size_t h = 0;
+    for (const auto &s : v) {
+      hash_combine(h, s);
+    }
+    return h;
+  }
+};
+
+}  // namespace std
+
+// String
+
+std::vector<std::string> split(const std::string &s, char delim) {
+  std::vector<std::string> pieces;
+
+  std::string cur;
+  for (char c : s) {
+    if (c == delim) {
+      if (!cur.empty()) {
+        pieces.emplace_back(std::move(cur));
+      }
+    } else {
+      cur += c;
+    }
+  }
+  if (!cur.empty()) {
+    pieces.emplace_back(std::move(cur));
+  }
+
+  return pieces;
+}
 
 // Math
 

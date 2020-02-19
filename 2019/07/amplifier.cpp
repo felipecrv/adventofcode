@@ -18,7 +18,7 @@
 using Program = std::vector<int>;
 
 struct VM {
-  VM(Program program) : _mem(std::move(program)) { clearState(); }
+  explicit VM(Program program) : _mem(std::move(program)) { clearState(); }
 
   void run() {
     assert(!has_output);

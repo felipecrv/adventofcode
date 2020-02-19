@@ -41,7 +41,6 @@ struct NAT {
 struct Network {
   explicit Network(Program program) : _program(std::move(program)) {
     for (auto &cpu : _cpu) {
-      cpu.clearState();
       cpu.loadProgram(_program);
     }
   }

@@ -7,7 +7,6 @@
 
 struct Springdroid {
   explicit Springdroid(Program program) : _program(std::move(program)) {
-    _cpu.clearState();
     _cpu.loadProgram(_program);
   }
 

@@ -272,15 +272,6 @@ struct Droid {
     return max_dist;
   }
 
-  void restart(Vec start_pos) {
-    state.reset(start_pos);
-    _parent.clear();
-    _dist.clear();
-
-    _cpu.clearState();
-    _cpu.loadProgram(_program);
-  }
-
 private:
   State state;
   std::unordered_map<Vec, Vec> _parent; // parent in the exploration BFS

@@ -20,4 +20,7 @@ clean:
 	rm -rf a.out.dSYM
 	rm -f a.out
 
-.PHONY: dep clean
+
+intcode: intcode_test 11/painting 17/cleaner 19/drone 21/springdroid 09/base_pointer 23/network 15/oxygen 13/game
+
+.PHONY: dep clean intcode

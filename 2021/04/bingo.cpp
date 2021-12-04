@@ -33,6 +33,8 @@ bool parseNumList(vector<int> &out) {
       case '\n':
         out.push_back(v);
         return true;
+      default:
+        break;
     }
   }
   assert(false && "invalid input");

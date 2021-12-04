@@ -3,12 +3,13 @@ LDFLAGS=-lm
 
 # Examples:
 #
-#     make 01/fuel_gold && ./a.out
+#     make 04/bingo && ./a.out
 #
-#     make 01/fuel_gold && ./a.out < 01/in
+#     make 04/bingo && ./a.out < 04/in
 #
-#     make 01/fuel_gold && lldb ./a.out
-#     > r < 01/in
+#     make 04/bingo && lldb ./a.out
+#     > settings set target.input-path 04/in
+#     > r
 #
 %: %.cpp dep
 	rm -f a.out

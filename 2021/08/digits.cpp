@@ -85,7 +85,7 @@ using Wiring = array<int, 7>;  // wiring[wire] = segment
 
 struct Display {
   explicit Display(const char *display_chars) {  // e.g. "fdgacbe"
-    count = strlen(display_chars);
+    int count = strlen(display_chars);
 
     memset(segments, false, sizeof(segments));
     for (int i = 0; i < count; i++) {
@@ -112,7 +112,6 @@ struct Display {
     return -1;
   }
 
-  int count;
   bool segments[7];
 };
 

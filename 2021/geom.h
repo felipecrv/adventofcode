@@ -31,6 +31,10 @@ struct Pt {
   inline int distSquared(Pt p) const;
   inline double dist(Pt p) const;
 
+  inline bool withinBox(int width, int height) const {
+    return x >= 0 && x < width && y >= 0 && y < height;
+  }
+
   int x;
   int y;
 };

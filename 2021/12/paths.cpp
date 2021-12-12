@@ -23,19 +23,30 @@ int id(const std::string &name) {
   return i;
 }
 
+std::vector<int> path;
+
 long long numOfPathsToTheEnd(uint32_t is_visited, bool has_extra_visit,
                              int through) {
-  if (through == END) return 1;
+  if (through == END) {
+    printf("start,");
+    for (int i = 0; i < path.size() - 1; i++) {
+      printf("%s,", name_of[path[i]].c_str());
+    }
+    puts("end");
+    return 1;
+  }
   if (is_small[through]) is_visited |= 1u << through;
   long long num_paths = 0;
   for (int i = 0; i < nadj[through]; i++) {
     const int next = adj[through][i];
     const bool visited_next = ((is_visited >> next) & 1u);
+    path.push_back(next);
     if (!is_small[next] || !visited_next) {
       num_paths += numOfPathsToTheEnd(is_visited, has_extra_visit, next);
     } else if (has_extra_visit && next != START) {
       num_paths += numOfPathsToTheEnd(is_visited, false, next);
     }
+    path.pop_back();
   }
   return num_paths;
 }

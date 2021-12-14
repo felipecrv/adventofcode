@@ -36,8 +36,13 @@ struct Pt {
     return x >= 0 && x < width && y >= 0 && y < height;
   }
 
-  int x;
-  int y;
+  union {
+    struct {
+      int x;
+      int y;
+    };
+    int comp[2];
+  };
 };
 
 inline Pt operator-(const Pt &a, const Pt &b) {

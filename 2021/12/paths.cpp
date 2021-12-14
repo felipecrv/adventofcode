@@ -1,6 +1,7 @@
 #include <cassert>
 #include <cstdio>
 #include <cstring>
+#include <stack>
 #include <string>
 #include <vector>
 
@@ -23,37 +24,45 @@ int id(const std::string &name) {
   return i;
 }
 
-std::vector<int> path;
+struct DFS {
+  DFS(uint32_t is_visited, bool has_extra_visit, int through)
+      : is_visited(is_visited),
+        has_extra_visit(has_extra_visit),
+        through(through) {}
 
-long long numOfPathsToTheEnd(uint32_t is_visited, bool has_extra_visit,
-                             int through) {
-  if (through == END) {
-    printf("start,");
-    for (int i = 0; i < path.size() - 1; i++) {
-      printf("%s,", name_of[path[i]].c_str());
-    }
-    puts("end");
-    return 1;
-  }
-  if (is_small[through]) is_visited |= 1u << through;
-  long long num_paths = 0;
-  for (int i = 0; i < nadj[through]; i++) {
-    const int next = adj[through][i];
-    const bool visited_next = ((is_visited >> next) & 1u);
-    path.push_back(next);
-    if (!is_small[next] || !visited_next) {
-      num_paths += numOfPathsToTheEnd(is_visited, has_extra_visit, next);
-    } else if (has_extra_visit && next != START) {
-      num_paths += numOfPathsToTheEnd(is_visited, false, next);
-    }
-    path.pop_back();
-  }
-  return num_paths;
-}
+  const uint32_t is_visited;
+  const bool has_extra_visit;
+  const int through;
+};
+
+std::vector<DFS> stack;
 
 long long numOfPathsFromStartToEnd(bool has_extra_visit) {
-  return numOfPathsToTheEnd(
-      /*is_visited*/ 0, has_extra_visit, /*through*/ START);
+  stack.emplace_back(/*is_visited*/ 0, has_extra_visit, /*through*/ START);
+
+  long long num_paths = 0;
+  while (!stack.empty()) {
+    const auto s = stack.back();
+    stack.pop_back();
+
+    if (s.through == END) {
+      num_paths += 1;
+      continue;
+    }
+
+    const uint32_t is_visited =
+        is_small[s.through] ? (s.is_visited | 1u << s.through) : s.is_visited;
+    for (int i = 0; i < nadj[s.through]; i++) {
+      const int next = adj[s.through][i];
+      const bool visited_next = ((is_visited >> next) & 1u);
+      if (!visited_next) {
+        stack.emplace_back(is_visited, s.has_extra_visit, next);
+      } else if (s.has_extra_visit && next != START) {
+        stack.emplace_back(is_visited, false, next);
+      }
+    }
+  }
+  return num_paths;
 }
 
 int main() {

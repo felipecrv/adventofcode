@@ -55,6 +55,17 @@ typename MapType::mapped_type *lookup(MapType &m,
   return nullptr;
 }
 
+template <typename MapType>
+typename MapType::mapped_type lookupOr(MapType &m,
+                                       const typename MapType::key_type &k,
+                                       const typename MapType::mapped_type &v) {
+  auto it = m.find(k);
+  if (it != m.end()) {
+    return it->second;
+  }
+  return v;
+}
+
 template <typename Container>
 bool contains(const Container &s, const typename Container::value_type &v) {
   return s.find(v) != s.end();

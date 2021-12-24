@@ -21,9 +21,15 @@ struct Pt {
     return x != other.x || y != other.y;
   }
 
-  // these don't make for a full order, so std::set<Pt> doesn't work correctly
-  // bool operator>(const Pt &other) const { return x > other.x || y > other.y; }
-  // bool operator<(const Pt &other) const { return x < other.x || y < other.y; }
+  bool operator<(const Pt &other) const {
+    if (x < other.x) {
+      return true;
+    }
+    if (x == other.x) {
+      return y < other.y;
+    }
+    return false;
+  }
 
   int dot(Pt other) const { return x * other.x + y * other.y; }
   int lengthSquared() const { return x * x + y * y; }

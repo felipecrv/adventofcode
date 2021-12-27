@@ -139,14 +139,19 @@ class Scanner {
       const Scanner& t,
       Pos& out_t_pos,      // t_pos that can make t...
       int& out_x) const {  // ...fully intersect with x transformation
+    const int NUM_COMMON_READINGS_REQ = 12;
+    int s_checked = 0;
     for (auto& s_reading : *this) {
+      if (s_checked + NUM_COMMON_READINGS_REQ > _readings.size()) return false;
+      s_checked += 1;
+
       for (auto& t_reading : t) {
         for (int x = 0; x < 48; x++) {
           // t_pos + t_reading = s_pos + s_reading
           // t_pos + t_reading = (0,0) + s_reading
           // t_pos = s_reading - t_reading
           const Pos t_pos = s_reading - t_reading.xformed(x);
-          if (intersectsAt(t, /*at_least*/ 12, t_pos, x)) {
+          if (intersectsAt(t, /*at_least*/ NUM_COMMON_READINGS_REQ, t_pos, x)) {
             out_t_pos = t_pos;
             out_x = x;
             return true;

@@ -235,14 +235,11 @@ int main() {
         c = getchar();
         if (c == '\n' || c == EOF) {
           scanners.push_back(scanner);
-          goto next_scanner;
+          break;
         }
         ungetc(c, stdin);
       }
     }
-
-  next_scanner:
-    continue;
   }
 
   fixateAllScanners();

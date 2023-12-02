@@ -1,0 +1,3 @@
+(executable
+ (name aoc)
+ (libraries base core prelude runner))

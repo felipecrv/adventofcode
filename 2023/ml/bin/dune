@@ -1,3 +1,5 @@
 (executable
  (name aoc)
- (libraries base core prelude runner))
+ (libraries base core prelude runner sedlex)
+ (preprocess
+  (pps sedlex.ppx)))

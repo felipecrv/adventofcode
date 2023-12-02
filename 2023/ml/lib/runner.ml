@@ -3,8 +3,25 @@ open Core
 module Sys = Caml.Sys
 
 module type Problem = sig
+  val part1 : Caml.in_channel -> unit
+  val part2 : Caml.in_channel -> unit
+end
+
+module type StringInputProblem = sig
   val part1 : string -> unit
   val part2 : string -> unit
+end
+
+module StringInput (S : StringInputProblem) : Problem = struct
+  let part1 in_channel =
+    let input = In_channel.input_all in_channel in
+    S.part1 input
+  ;;
+
+  let part2 in_channel =
+    let input = In_channel.input_all in_channel in
+    S.part2 input
+  ;;
 end
 
 module Private = struct
@@ -125,9 +142,9 @@ module Private = struct
             | Part2 path -> "🌟", "part2", Problem.part2, path
           in
           Stdio.printf "%s Running %s of %s on %s\n" star name sday path;
-          let input = In_channel.read_all path in
+          let input_channel = In_channel.create path in
           Stdio.Out_channel.flush Stdio.stdout;
-          run_part input)
+          run_part input_channel)
   ;;
 
   open Cmdliner

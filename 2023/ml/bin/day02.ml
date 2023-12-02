@@ -1,40 +1,20 @@
 open Base
 
-type color =
-  | Red
-  | Green
-  | Blue
-
 type token =
   | Game
   | Num of int
   | Color of color
   | Semicolon
-  | EndOfLine
-  | EndOfFile
+  | End
 
-let digit = [%sedlex.regexp? '0' .. '9']
-let number = [%sedlex.regexp? Plus digit]
-
-let fail expected got after =
-  (match after with
-   | Some after ->
-     Printf.sprintf "Expected `%s` after `%s`, but got `%s`" expected after got
-   | None -> Printf.sprintf "Expected `%s` but got `%s`" expected got)
-  |> failwith
-;;
-
-let fail_at buf =
-  let pos = fst (Sedlexing.lexing_positions buf) in
-  Printf.sprintf
-    "At line %d, column %d: %s"
-    pos.pos_lnum
-    (pos.pos_cnum - pos.pos_bol)
-    (Sedlexing.Latin1.lexeme buf)
-  |> failwith
-;;
+and color =
+  | Red
+  | Green
+  | Blue
 
 let rec token buf =
+  let digit = [%sedlex.regexp? '0' .. '9'] in
+  let number = [%sedlex.regexp? Plus digit] in
   match%sedlex buf with
   | "Game " -> Game
   | number -> Num (Int.of_string (Sedlexing.Latin1.lexeme buf))
@@ -43,138 +23,66 @@ let rec token buf =
   | "green" -> Color Green
   | "blue" -> Color Blue
   | "; " -> Semicolon
-  | "\n" -> EndOfLine
-  | eof -> EndOfFile
-  | _ -> fail_at buf
+  | "\n" | eof -> End
+  | _ -> failwith "unexpected input"
 ;;
 
-type game = int * stats list
+type game = int * lower_bounds
 
-and stats =
-  { red : int option
-  ; green : int option
-  ; blue : int option
+and lower_bounds =
+  { red : int
+  ; green : int
+  ; blue : int
   }
 
-let empty = { red = None; green = None; blue = None }
-
 let parse_game buf =
-  let add_color color (k : int) = function
-    | s :: rest ->
-      let s' =
-        match color with
-        | Red -> { s with red = Some k }
-        | Green -> { s with green = Some k }
-        | Blue -> { s with blue = Some k }
-      in
-      s' :: rest
-    | [] -> failwith "Empty stats list"
-  in
-  let rec parse_stats buf acc =
+  let rec lower_bounds acc =
     match token buf with
     | Num n ->
       (match token buf with
-       | Color color -> parse_stats buf (add_color color n acc)
-       | _ -> fail "red|green|blue" "" (Some (Int.to_string n ^ " ")))
-    | Semicolon -> parse_stats buf (empty :: acc)
-    | EndOfLine | EndOfFile -> acc
-    | _ -> fail "red|green|blue|;" "" None
+       | Color color ->
+         lower_bounds
+           (match color with
+            | Red -> { acc with red = Int.max acc.red n }
+            | Green -> { acc with green = Int.max acc.green n }
+            | Blue -> { acc with blue = Int.max acc.blue n })
+       | _ -> failwith "expected color count")
+    | Semicolon -> lower_bounds acc
+    | End -> acc
+    | _ -> failwith "expected color count|;|eol|eof"
   in
   match token buf with
   | Game ->
     (match token buf with
-     | Num n ->
-       let game = n, parse_stats buf [ empty ] in
-       Some game
-     | _ -> fail "[0-9]+: " "" (Some "Game "))
-  | EndOfFile -> None
-  | _ -> fail "Game " "" None
+     | Num n -> Some (n, lower_bounds { red = 0; green = 0; blue = 0 })
+     | _ -> failwith "expected game id")
+  | End -> None
+  | _ -> failwith "expected game"
 ;;
 
-let string_of_lower_bound s = function
-  | None -> s ^ ":?"
-  | Some n -> s ^ ":" ^ Int.to_string n
-;;
-
-let rec print_stats game is_tail =
-  match game with
-  | s :: rest ->
-    Stdio.printf
-      "%s%s, %s, %s"
-      (if is_tail then "; " else "")
-      (string_of_lower_bound "red" s.red)
-      (string_of_lower_bound "green" s.green)
-      (string_of_lower_bound "blue" s.blue);
-    print_stats rest true
-  | [] -> Stdio.print_endline ""
-;;
-
-let print_game game =
-  Stdio.printf "Game %d: " (fst game);
-  print_stats (snd game) false
-;;
-
-let reduce_lower_bounds stats =
-  List.fold_left
-    ~init:{ red = None; green = None; blue = None }
-    ~f:(fun acc s ->
-      let max = function
-        | None -> fun rhs -> rhs
-        | Some lhs ->
-          (function
-           | Some rhs -> Some (Int.max lhs rhs)
-           | None -> Some lhs)
-      in
-      { red = max acc.red s.red
-      ; green = max acc.green s.green
-      ; blue = max acc.blue s.blue
-      })
-    stats
-;;
-
-let is_possible = function
-  | red, green, blue ->
-    let aux upper_bound = function
-      | None -> true
-      | Some n -> n <= upper_bound
-    in
-    fun s -> aux red s.red && aux green s.green && aux blue s.blue
-;;
-
-let power = function
-  | { red; green; blue } ->
-    [ red; green; blue ]
-    |> List.fold_left ~init:(Int.to_int64 1) ~f:(fun acc -> function
-         | Some n ->
-           let open Int64 in
-           acc * Int.to_int64 n
-         | None -> acc)
-;;
-
-let part1 input =
-  let rec loop buf sum power_sum =
+let run ~weight buf =
+  let open Int64 in
+  let rec loop acc =
     match parse_game buf with
     | Some game ->
-      print_game game;
-      let id, stats = game in
-      let lower_bounds = reduce_lower_bounds stats in
-      if is_possible (12, 13, 14) lower_bounds
-      then (
-        Stdio.printf "Game %d is possible\n" id;
-        print_stats [ lower_bounds ] false;
-        loop
-          buf
-          (sum + id)
-          (let open Int64 in power_sum + power lower_bounds))
-      else loop buf sum (let open Int64 in power_sum + power lower_bounds)
-    | None -> sum, power_sum
+      (* let id, { red; green; blue } = game in *)
+      (* Stdio.printf "Game %d: %d red, %d green, %d blue\n" id red green blue; *)
+      loop (acc + Int.to_int64 (weight game))
+    | None -> acc
   in
-  let sum, power_sum = loop (Sedlexing.Latin1.from_channel input) 0 Int64.zero in
-  Stdio.printf "%d\n" sum;
-  Stdio.printf "%Ld\n" power_sum
+  Stdio.printf "%Ld\n" (loop zero)
 ;;
 
-let part2 input =
-  ignore input;
-  Stdio.print_endline "Not implemented"
+let part1 =
+  run ~weight:(function id, { red; green; blue } ->
+    if red <= 12 && green <= 13 && blue <= 14 then id else 0)
+;;
+
+let part2 =
+  let one_or = function
+    | 0 -> 1
+    | i -> i
+  in
+  run ~weight:(function _, { red; green; blue } ->
+    one_or red * one_or green * one_or blue)
 ;;

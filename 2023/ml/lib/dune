@@ -1,8 +1,11 @@
 (library
  (name runner)
- (libraries base core cmdliner)
+ (libraries base cmdliner core sedlex)
  (modules runner))
 
 (library
  (name prelude)
+ (libraries base core sedlex)
+ (preprocess
+  (pps sedlex.ppx))
  (modules prelude))

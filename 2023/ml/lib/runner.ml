@@ -12,6 +12,11 @@ module type StringInputProblem = sig
   val part2 : string -> unit
 end
 
+module type SedlexInputProblem = sig
+  val part1 : Sedlexing.lexbuf -> unit
+  val part2 : Sedlexing.lexbuf -> unit
+end
+
 module StringInput (S : StringInputProblem) : Problem = struct
   let part1 in_channel =
     let input = In_channel.input_all in_channel in
@@ -21,6 +26,18 @@ module StringInput (S : StringInputProblem) : Problem = struct
   let part2 in_channel =
     let input = In_channel.input_all in_channel in
     S.part2 input
+  ;;
+end
+
+module SedlexInput (S : SedlexInputProblem) : Problem = struct
+  let part1 in_channel =
+    let lexbuf = Sedlexing.Latin1.from_channel in_channel in
+    S.part1 lexbuf
+  ;;
+
+  let part2 in_channel =
+    let lexbuf = Sedlexing.Latin1.from_channel in_channel in
+    S.part2 lexbuf
   ;;
 end
 

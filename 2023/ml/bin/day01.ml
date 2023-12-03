@@ -8,7 +8,7 @@ end
 
 module SimpleParser : Parser = struct
   let number = function
-    | ('0' .. '9' as c) :: rest -> Some (int_of_char c), rest
+    | ('1' .. '9' as c) :: rest -> Some (int_of_char c), rest
     | _ :: rest -> None, rest
     | [] -> None, []
   ;;
@@ -16,7 +16,6 @@ end
 
 module FullParser : Parser = struct
   let number = function
-    | 'z' :: 'e' :: 'r' :: ('o' :: _ as rest) -> Some 0, rest
     | 'o' :: 'n' :: ('e' :: _ as rest) -> Some 1, rest
     | 't' :: 'w' :: ('o' :: _ as rest) -> Some 2, rest
     | 't' :: 'h' :: 'r' :: 'e' :: ('e' :: _ as rest) -> Some 3, rest

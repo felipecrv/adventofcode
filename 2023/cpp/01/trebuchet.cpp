@@ -3,25 +3,15 @@
 #include <cstdio>
 #include <string>
 
-int64_t reference_impl(const std::string &in) {
-  enum {
-    BEGIN_LINE,
-    FIRST_DIGIT_FOUND,
-  } state = BEGIN_LINE;
+int64_t reference_impl(const char *in) {
+  bool first_digit_found = false;
   int64_t sum = 0;
   int last_digit = 0;
 
-#define ON_DIGIT(digit)          \
-  switch (state) {               \
-    case BEGIN_LINE:             \
-      last_digit = (digit);      \
-      sum += 10 * (digit);       \
-      state = FIRST_DIGIT_FOUND; \
-      break;                     \
-    case FIRST_DIGIT_FOUND:      \
-      last_digit = (digit);      \
-      break;                     \
-  }
+#define ON_DIGIT(digit)                       \
+  last_digit = (digit);                       \
+  sum += 10 * (digit) * !first_digit_found; \
+  first_digit_found = true;
 
   for (int i = 0;; i++) {
     const char c = in[i];
@@ -41,7 +31,7 @@ int64_t reference_impl(const std::string &in) {
         break;
       case '\n':
         sum += last_digit;
-        state = BEGIN_LINE;
+        first_digit_found = false;
         break;
       case 'o':
         if (in[i + 1] == 'n' && in[i + 2] == 'e') {
@@ -109,7 +99,7 @@ done:
 }
 
 int run(const std::string &input) {
-  const int64_t sum = reference_impl(input);
+  const int64_t sum = reference_impl(input.c_str());
   printf("%lld\n", sum);
   return 0;
 }

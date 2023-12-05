@@ -1,10 +1,10 @@
 open Base
 open Core
-module Sys = Caml.Sys
+module Sys = Stdlib.Sys
 
 module type Problem = sig
-  val part1 : Caml.in_channel -> unit
-  val part2 : Caml.in_channel -> unit
+  val part1 : Stdlib.in_channel -> unit
+  val part2 : Stdlib.in_channel -> unit
 end
 
 module type StringInputProblem = sig

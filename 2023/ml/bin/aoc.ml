@@ -6,5 +6,6 @@ let _ =
   register ~day:3 (module SedlexInput (Day03));
   register ~day:4 (module SedlexInput (Day04));
   register ~day:5 (module SedlexInput (Day05));
+  register ~day:6 (module SedlexInput (Day06));
   main ()
 ;;

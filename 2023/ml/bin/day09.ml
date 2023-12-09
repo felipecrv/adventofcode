@@ -31,19 +31,16 @@ let parse_rows buf =
 ;;
 
 let solve row ~backwards =
-  let rec all_the_same_aux xs = function
-    | false -> false
-    | true ->
-      (match xs with
-       | [] | [ _ ] -> true
-       | x :: (x' :: _ as rest) -> all_the_same_aux rest (x = x'))
+  let all_the_same = function
+    | [] | [ _ ] -> true
+    | x :: xs -> List.for_all ~f:(fun x' -> x = x') xs
   in
   let rec diffs_aux acc = function
     | [] | _ :: [] -> List.rev acc
     | x :: (x' :: _ as rest) -> diffs_aux ((x' - x) :: acc) rest
   in
   let rec decompose_aux acc row =
-    if all_the_same_aux row true
+    if all_the_same row
     then acc
     else (
       let row' = diffs_aux [] row in

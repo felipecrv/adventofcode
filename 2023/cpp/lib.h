@@ -30,6 +30,10 @@ struct Vec {
 
   Vec operator-() const { return Vec(-x, -y); }
 
+  bool operator<(const Vec &other) const {
+    return x < other.x || (x == other.x && y < other.y);
+  }
+
   bool operator==(const Vec &other) const {
     return x == other.x && y == other.y;
   }

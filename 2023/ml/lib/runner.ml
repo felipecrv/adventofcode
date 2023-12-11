@@ -55,71 +55,87 @@ module Private = struct
     | Part1 of string
     | Part2 of string
 
+  (** [Silver test] means that the input file is only used for part 1 and is a
+      small test file if test is true. *)
   type compatibility =
-    | Both
-    | Silver (* Part 1 only *)
-    | Gold (* Part 2 only *)
+    | Both of bool
+    | Silver of bool (* Part 1 only *)
+    | Gold of bool (* Part 2 only *)
 
   let make_path sday basename = sday ^ "/" ^ basename
 
   let input_candidates =
-    [ "test_in", Both
-    ; "test_in0", Both
-    ; "test_in1", Both
-    ; "test_in2", Both
-    ; "test_in_silver", Silver
-    ; "test_in_silver0", Silver
-    ; "test_in_silver1", Silver
-    ; "test_in_silver2", Silver
-    ; "test_in_gold", Gold
-    ; "test_in_gold0", Gold
-    ; "test_in_gold1", Gold
-    ; "test_in_gold2", Gold
-    ; "in", Both
-    ; "in0", Both
-    ; "in1", Both
-    ; "in2", Both
-    ; "in_silver", Silver
-    ; "in_silver0", Silver
-    ; "in_silver1", Silver
-    ; "in_silver2", Silver
-    ; "in_gold", Gold
-    ; "in_gold0", Gold
-    ; "in_gold1", Gold
-    ; "in_gold2", Gold
+    [ "test_in", Both true
+    ; "test_in0", Both true
+    ; "test_in1", Both true
+    ; "test_in2", Both true
+    ; "test_in_silver", Silver true
+    ; "test_in_silver0", Silver true
+    ; "test_in_silver1", Silver true
+    ; "test_in_silver2", Silver true
+    ; "test_in_gold", Gold true
+    ; "test_in_gold0", Gold true
+    ; "test_in_gold1", Gold true
+    ; "test_in_gold2", Gold true
+    ; "in", Both false
+    ; "in0", Both false
+    ; "in1", Both false
+    ; "in2", Both false
+    ; "in_silver", Silver false
+    ; "in_silver0", Silver false
+    ; "in_silver1", Silver false
+    ; "in_silver2", Silver false
+    ; "in_gold", Gold false
+    ; "in_gold0", Gold false
+    ; "in_gold1", Gold false
+    ; "in_gold2", Gold false
     ]
   ;;
 
-  let filtered_candidates part =
-    List.filter input_candidates ~f:(fun (_, compatibility) ->
-      match part with
-      | Some 1 ->
-        (match compatibility with
-         | Silver | Both -> true
-         | _ -> false)
-      | Some 2 ->
-        (match compatibility with
-         | Gold | Both -> true
-         | _ -> false)
-      | Some _ | None -> true)
+  let match_compatibility ~part ~test_only candidate =
+    let _, compatibility = candidate in
+    match compatibility with
+    | Silver t -> Option.mem ~equal:Int.equal part 1 && ((not test_only) || t)
+    | Gold t -> Option.mem ~equal:Int.equal part 2 && ((not test_only) || t)
+    | Both t -> (not test_only) || t
   ;;
 
-  let input_schedule sday =
+  let filtered_candidates part test_only =
+    List.filter input_candidates ~f:(match_compatibility ~part ~test_only)
+  ;;
+
+  let input_schedule sday part test_only =
     let schedule = function
       | basename, compatibility ->
         let path = make_path sday basename in
         if Sys.file_exists path
         then (
-          match compatibility with
-          | Both -> [ Part1 path; Part2 path ]
-          | Silver -> [ Part1 path ]
-          | Gold -> [ Part2 path ])
+          match part with
+          | None ->
+            (match compatibility with
+             | Both _ -> [ Part1 path; Part2 path ]
+             | Silver _ -> [ Part1 path ]
+             | Gold _ -> [ Part2 path ])
+          | Some 1 ->
+            (match compatibility with
+             | Both _ -> [ Part1 path ]
+             | Silver _ -> [ Part1 path ]
+             | Gold _ -> [])
+          | Some 2 ->
+            (match compatibility with
+             | Both _ -> [ Part2 path ]
+             | Silver _ -> []
+             | Gold _ -> [ Part2 path ])
+          | Some _ -> failwith "Invalid problem part: must be 1 or 2.")
         else []
     in
-    input_candidates |> List.map ~f:schedule |> List.concat
+    input_candidates
+    |> List.filter ~f:(match_compatibility ~part ~test_only)
+    |> List.map ~f:schedule
+    |> List.concat
   ;;
 
-  let run_problem ~day ~part =
+  let run_problem ~day ~part ~test_only =
     let string_of_day d = (if d < 10 then "day0" else "day") ^ Int.to_string d in
     match get_problem ~day with
     | None ->
@@ -130,25 +146,12 @@ module Private = struct
     | Some (module Problem) ->
       let sday = string_of_day day in
       if not (Sys.file_exists sday) then Sys.mkdir sday 0o755;
-      let schedule =
-        match part with
-        | None -> input_schedule sday
-        | Some 1 ->
-          input_schedule sday
-          |> List.filter ~f:(function
-               | Part1 _ -> true
-               | _ -> false)
-        | Some 2 ->
-          input_schedule sday
-          |> List.filter ~f:(function
-               | Part2 _ -> true
-               | _ -> false)
-        | Some _ -> failwith "Invalid problem part: must be 1 or 2."
-      in
+      let schedule = input_schedule sday part test_only in
       if List.is_empty schedule
       then (
         Stdio.printf "No input files found in %s/. Looked for one of these files:\n" sday;
-        filtered_candidates part
+        input_candidates
+        |> List.filter ~f:(match_compatibility ~part ~test_only)
         |> List.iter ~f:(fun (basename, _) ->
              Stdio.printf "  %s\n" (make_path sday basename)))
       else
@@ -176,17 +179,22 @@ module Private = struct
     Arg.(value & opt (some int) None & info [ "part" ] ~docv:"PART" ~doc)
   ;;
 
+  let test_only =
+    let doc = "Run only the small test inputs." in
+    Arg.(value & flag & info [ "test" ] ~doc)
+  ;;
+
   let main () =
-    let run (day : int option) (part : int option) : unit Term.ret =
+    let run (day : int option) (part : int option) (test_only : bool) : unit Term.ret =
       match day, part with
       | None, _ -> `Error (false, {|"day" argument required.|})
       | Some day, (None | Some (1 | 2)) ->
-        run_problem ~day ~part;
+        run_problem ~day ~part ~test_only;
         `Ok ()
       | _, Some _ -> `Error (false, {|"part" argument must be 1 or 2.|})
     in
     let info = Cmd.info "aoc" ~doc:"Run Advent of Code problem." in
-    let cmd = Cmd.v info Term.(ret (const run $ day $ part)) in
+    let cmd = Cmd.v info Term.(ret (const run $ day $ part $ test_only)) in
     exit @@ Cmd.eval cmd
   ;;
 end

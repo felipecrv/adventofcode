@@ -1,6 +1,7 @@
 #include <cassert>
 #include <cstdio>
 #include <queue>
+#include <stack>
 #include <set>
 #include <vector>
 
@@ -10,73 +11,59 @@ int n = 0, m = 0;
 char map[200][200];
 Vec start;
 
+// The first on_conn that returns true will cause ForEachConn to stop iteration
+// over connections and return.
 template <typename F>
-inline void ForEachConn(int x, int y, F &&on_conn) {
+inline bool ForEachConn(int x, int y, F &&on_conn) {
   const char tile = map[y][x];
+  // Alway iterate over connection in counter-clockwise order: W, S, E, N.
   switch (tile) {
-    // '|' is a vertical pipe connecting north and south.
     case '|':
-      if (y < n) on_conn(x, y + 1);  // south
-      if (y > 0) on_conn(x, y - 1);  // north
-      break;
-    // '-' is a horizontal pipe connecting east and west.
+      // '|' is a vertical pipe connecting south and north.
+      return (y < n && on_conn(x, y + 1)) || (y > 0 && on_conn(x, y - 1));
     case '-':
-      if (x < m) on_conn(x + 1, y);  // east
-      if (x > 0) on_conn(x - 1, y);  // west
-      break;
-    // 'L' is a 90-degree bend connecting north and east.
+      // '-' is a horizontal pipe connecting west and east.
+      return (x > 0 && on_conn(x - 1, y)) || (x < m && on_conn(x + 1, y));
     case 'L':
-      if (y > 0) on_conn(x, y - 1);  // north
-      if (x < m) on_conn(x + 1, y);  // east
-      break;
-    // 'J' is a 90-degree bend connecting north and west.
+      // 'L' is a 90-degree bend connecting east and north.
+      return (x < m && on_conn(x + 1, y)) || (y > 0 && on_conn(x, y - 1));
     case 'J':
-      if (x > 0) on_conn(x - 1, y);  // west
-      if (y > 0) on_conn(x, y - 1);  // north
-      break;
-    // '7' is a 90-degree bend connecting south and west.
+      // 'J' is a 90-degree bend connecting west and north.
+      return (x > 0 && on_conn(x - 1, y)) || (y > 0 && on_conn(x, y - 1));
     case '7':
-      if (x > 0) on_conn(x - 1, y);  // west
-      if (y < n) on_conn(x, y + 1);  // south
-      break;
-    // 'F' is a 90-degree bend connecting south and east.
+      // '7' is a 90-degree bend connecting west and south.
+      return (x > 0 && on_conn(x - 1, y)) || (y < n && on_conn(x, y + 1));
     case 'F':
-      if (x < m) on_conn(x + 1, y);  // east
-      if (y < n) on_conn(x, y + 1);  // south
-      break;
-    // '.' is ground; there is no pipe in this tile.
+      // 'F' is a 90-degree bend connecting east and south.
+      return (x < m && on_conn(x + 1, y)) || (y < n && on_conn(x, y + 1));
     case '.':
+      // '.' is ground; there is no pipe in this tile.
       break;
-    // 'S' is the starting position of the animal; there is a pipe on this
-    //     tile, but your sketch doesn't show what shape the pipe has.
     case 'S':
-      if (x > 0) on_conn(x - 1, y);  // west
-      if (y < n) on_conn(x, y + 1);  // south
-      if (x < m) on_conn(x + 1, y);  // east
-      if (y > 0) on_conn(x, y - 1);  // north
-      break;
+      // 'S' is the starting position of the animal; there is a pipe on this
+      //     tile, but your sketch doesn't show what shape the pipe has.
+      return (x > 0 && on_conn(x - 1, y)) ||  // West
+             (y < n && on_conn(x, y + 1)) ||  // South
+             (x < m && on_conn(x + 1, y)) ||  // East
+             (y > 0 && on_conn(x, y - 1));    // North
   }
-}
-
-bool IsConnTowards(int x0, int y0, int x1, int y1) {
-  bool confirmed = false;
-  ForEachConn(x0, y0, [x1, y1, &confirmed](int conn_x, int conn_y) {
-    if (conn_x == x1 && conn_y == y1) {
-      // printf("  %d,%d -> %d,%d\n", x, y, conn_x, conn_y);
-      confirmed = true;
-    }
-  });
-  return confirmed;
+  return false;
 }
 
 template <typename F>
-void ForEachNeigh(int x, int y, F &&on_neigh) {
-  ForEachConn(x, y,
-              [x, y, on_neigh = std::move(on_neigh)](int conn_x, int conn_y) {
-                if (IsConnTowards(conn_x, conn_y, x, y)) {
-                  on_neigh(conn_x, conn_y);
-                }
-              });
+bool ForEachNeigh(int x, int y, F &&on_neigh) {
+  return ForEachConn(
+      x, y,
+      [x, y, on_neigh = std::move(on_neigh)](int conn_x, int conn_y) -> bool {
+        const bool is_conn_towards =
+            ForEachConn(conn_x, conn_y, [x, y](int conn_x, int conn_y) {
+              return conn_x == x && conn_y == y;
+            });
+        if (is_conn_towards) {
+          return on_neigh(conn_x, conn_y);
+        }
+        return false;  // continue
+      });
 }
 
 void print_map() {
@@ -123,7 +110,9 @@ std::optional<Vec> first_neigh_in_cycle(int x, int y,
                      !linearContains(all_so_far, neigh)) {
                    assert(neigh != (Vec{x, y}));
                    ret = neigh;
+                   return true;  // break
                  }
+                 return false;  // continue
                });
   return ret;
 }
@@ -188,18 +177,22 @@ done:
     State(Vec pos, int dist) : pos(pos), dist(dist) {}
   };
 
-  std::queue<State> q;
-  q.push(State(start, 0));
+  std::stack<State> s;
+  s.push(State(start, 0));
   std::set<Vec> visited;
-  while (!q.empty()) {
-    auto v = q.front();
+  while (!s.empty()) {
+    auto v = s.top();
     int x = v.pos.x;
     int y = v.pos.y;
     int dist = v.dist;
-    q.pop();
-    if (visited.count({x, y})) {
-      printf("already visited %d,%d (dist = %d)\n", x, y, dist);
+    s.pop();
+    puts(":");
+    if (v.pos == start && visited.count(start)) {
+      // XXX: extract
+      const int half_dist = (dist + 1) / 2;
+      printf("already visited %d,%d (dist = %d, half-dist = %d)\n", x, y, dist, half_dist);
       auto &cycle = visited;
+      puts("orienting corners...");
       auto corners = orient_corners(cycle);
       for (int y = 0; y < n; y++) {
         for (int x = 0; x < m; x++) {
@@ -222,12 +215,20 @@ done:
       printf("area = %d\n", area);
       break;
     }
-    visited.insert({x, y});
+    if (visited.count(v.pos)) {
+      continue;
+    }
+    visited.insert(v.pos);
     ForEachNeigh(x, y, [&, dist](int neigh_x, int neigh_y) {
+      auto neigh = Vec{neigh_x, neigh_y};
       assert(map[neigh_y][neigh_x] != '.');
-      if (visited.count({neigh_x, neigh_y}) == 0) {
-        q.emplace(Vec{neigh_x, neigh_y}, dist + 1);
+      if (visited.count(neigh) == 0) {
+        s.emplace(neigh, dist + 1);
       }
+      // XXX: continue here
+      // if (neigh == start) {
+      // }
+      return false;  // continue
     });
   }
 

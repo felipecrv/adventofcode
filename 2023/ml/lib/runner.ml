@@ -65,28 +65,28 @@ module Private = struct
   let make_path sday basename = sday ^ "/" ^ basename
 
   let input_candidates =
-    [ "test_in", Both true
-    ; "test_in0", Both true
+    [ "test_in0", Both true
+    ; "test_in", Both true
     ; "test_in1", Both true
     ; "test_in2", Both true
-    ; "test_in_silver", Silver true
     ; "test_in_silver0", Silver true
+    ; "test_in_silver", Silver true
     ; "test_in_silver1", Silver true
     ; "test_in_silver2", Silver true
-    ; "test_in_gold", Gold true
     ; "test_in_gold0", Gold true
+    ; "test_in_gold", Gold true
     ; "test_in_gold1", Gold true
     ; "test_in_gold2", Gold true
-    ; "in", Both false
     ; "in0", Both false
+    ; "in", Both false
     ; "in1", Both false
     ; "in2", Both false
-    ; "in_silver", Silver false
     ; "in_silver0", Silver false
+    ; "in_silver", Silver false
     ; "in_silver1", Silver false
     ; "in_silver2", Silver false
-    ; "in_gold", Gold false
     ; "in_gold0", Gold false
+    ; "in_gold", Gold false
     ; "in_gold1", Gold false
     ; "in_gold2", Gold false
     ]

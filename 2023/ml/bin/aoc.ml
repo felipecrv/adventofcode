@@ -10,5 +10,8 @@ let _ =
   register ~day:7 (module SedlexInput (Day07));
   (* Day 08 was solved in C++ *)
   register ~day:9 (module SedlexInput (Day09));
+  (* Day 10 was solved in C++ *)
+  (* Day 11 was solved in C++ *)
+  register ~day:12 (module SedlexInput (Day12));
   main ()
 ;;
